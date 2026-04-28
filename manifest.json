@@ -1,27 +1,26 @@
 {
   "name": "СТ8 СТРОЙ | МАСТЕР AI",
   "short_name": "СТ8 СТРОЙ",
-  "description": "AI персональный помощник прораба и строителя. Управление объектами, документы, дефекты, учёт работ, безопасность",
-  "start_url": "/index.html?v=2",
-  "scope": "/",
+  "description": "AI персональный помощник прораба и строителя",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "theme_color": "#0c0c0c",
   "background_color": "#0c0c0c",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230c0c0c' width='192' height='192'/><text x='96' y='50' font-size='50' font-weight='900' text-anchor='middle' fill='%23F5C518' font-family='Oswald'>СТ8</text><text x='96' y='140' font-size='70' text-anchor='middle'>🏗️</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230c0c0c' width='192' height='192'/><text x='96' y='70' font-size='50' font-weight='900' text-anchor='middle' fill='%23F5C518' font-family='Inter'>СТ8</text><text x='96' y='150' font-size='75' text-anchor='middle'>🏗️</text></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%230c0c0c' width='512' height='512'/><text x='256' y='140' font-size='140' font-weight='900' text-anchor='middle' fill='%23F5C518' font-family='Oswald'>СТ8</text><text x='256' y='380' font-size='180' text-anchor='middle'>🏗️</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%230c0c0c' width='512' height='512'/><text x='256' y='180' font-size='130' font-weight='900' text-anchor='middle' fill='%23F5C518' font-family='Inter'>СТ8</text><text x='256' y='420' font-size='200' text-anchor='middle'>🏗️</text></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "business"],
   "prefer_related_applications": false
 }
