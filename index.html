@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>СТ8 СТРОЙ | МАСТЕР AI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F5C518">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="СТ8 СТРОЙ">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --accent:#F5C518;--bg:#0c0c0c;--surface:#161616;--surface2:#202020;--surface3:#2a2a2a;
+  --border:rgba(255,255,255,.08);--text:#f0f0f0;--text-muted:rgba(240,240,240,.45);--text-dim:rgba(240,240,240,.2);
+  --font:'Inter',sans-serif;--font-hd:'Oswald',sans-serif;
+  --header-h:58px;--bnav-h:64px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--font);}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ═══ SPLASH ═══ */
+#splash{position:fixed;inset:0;z-index:9999;background:#0c0c0c;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s;}
+#splash.fade{opacity:0;pointer-events:none;}
+.sp-logo{font-family:var(--font-hd);font-size:2.8rem;font-weight:700;letter-spacing:.06em;margin-bottom:.1rem;}
+.sp-logo span{color:var(--accent);}
+.sp-sub{font-size:.62rem;letter-spacing:.3em;color:var(--text-muted);text-transform:uppercase;margin-bottom:2.5rem;}
+.sp-bar-wrap{width:200px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-bottom:.75rem;}
+.sp-bar{height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .15s;}
+.sp-pct{font-size:.75rem;font-weight:700;color:var(--accent);}
+.sp-hint{font-size:.6rem;color:rgba(240,240,240,.25);margin-top:2rem;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ═══ SHELL ═══ */
+#app{display:none;min-height:100vh;flex-direction:column;}
+header{position:sticky;top:0;z-index:100;background:rgba(12,12,12,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);height:var(--header-h);display:flex;align-items:center;padding:0 .875rem;gap:.6rem;}
+.hd-brand{display:flex;flex-direction:column;flex-shrink:0;}
+.hd-logo{font-family:var(--font-hd);font-size:.88rem;font-weight:700;letter-spacing:.08em;}
+.hd-logo span{color:var(--accent);}
+.hd-obj{font-size:.6rem;color:var(--accent);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+@media(min-width:600px){.hd-obj{max-width:180px;}}
+.tab-nav{flex:1;display:flex;align-items:center;gap:.1rem;overflow-x:auto;scrollbar-width:none;}
+.tab-nav::-webkit-scrollbar{display:none;}
+@media(max-width:767px){.tab-nav{display:none;}}
+.tab-btn{display:flex;align-items:center;gap:.25rem;padding:.32rem .5rem;border-radius:7px;border:none;background:transparent;color:var(--text-muted);font-size:.7rem;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);background:var(--surface2);}
+.tab-btn.active{color:var(--accent);background:rgba(245,197,24,.1);}
+.tab-btn .ti{font-size:.88rem;}
+.tab-btn .tl{display:none;}
+@media(min-width:900px){.tab-btn .tl{display:inline;}}
+.hd-right{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.master-online{font-size:.63rem;color:#22c55e;display:none;}
+@media(min-width:640px){.master-online{display:block;}}
+.settings-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;min-width:34px;height:34px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:background .2s;color:var(--text-muted);}
+.settings-btn:hover{background:var(--surface3);color:var(--text);}
+
+/* ═══ BOTTOM NAV (mobile) ═══ */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:99;background:rgba(12,12,12,.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);}
+@media(max-width:767px){.bottom-nav{display:flex;}}
+.bn-items{display:flex;width:100%;overflow-x:auto;scrollbar-width:none;}
+.bn-items::-webkit-scrollbar{display:none;}
+.bn-btn{flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:.55rem .2rem;border:none;background:transparent;color:var(--text-muted);cursor:pointer;transition:color .2s;font-size:.55rem;font-weight:500;min-height:var(--bnav-h);}
+.bn-btn .bni{font-size:1.15rem;line-height:1;}
+.bn-btn.active{color:var(--accent);}
+
+/* ═══ CONTENT ═══ */
+.content{flex:1;padding:1rem;max-width:1280px;width:100%;margin:0 auto;padding-bottom:calc(var(--bnav-h) + var(--safe-bottom) + .5rem);}
+@media(min-width:768px){.content{padding:1.5rem;padding-bottom:1.5rem;}}
+
+/* ═══ GREETING ═══ */
+.greeting-card{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid rgba(245,197,24,.18);border-radius:12px;padding:.85rem 1rem;margin-bottom:.85rem;display:flex;align-items:flex-start;gap:.6rem;}
+.gc-avatar{width:34px;height:34px;background:rgba(245,197,24,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.gc-text{font-size:.8rem;color:var(--text-muted);line-height:1.5;}
+.gc-text strong{color:var(--text);font-weight:600;}
+
+/* ═══ TABS ═══ */
+.tab-panel{display:none;animation:fadeIn .25s ease;}
+.tab-panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ BUTTONS ═══ */
+.btn{padding:.55rem 1.1rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;white-space:nowrap;min-height:36px;}
+.btn-accent{background:var(--accent);color:#0c0c0c;}
+.btn-accent:hover{filter:brightness(1.08);}
+.btn-outline{background:transparent;border:1.5px solid var(--accent);color:var(--accent);}
+.btn-outline:hover{background:rgba(245,197,24,.1);}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--surface3);}
+.btn-danger{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25);}
+.btn-danger:hover{background:rgba(239,68,68,.22);}
+.btn-success{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25);}
+.btn-success:hover{background:rgba(34,197,94,.22);}
+.import-label{display:inline-flex;align-items:center;gap:.3rem;padding:.55rem 1.1rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text);border:1px solid var(--border);white-space:nowrap;min-height:36px;}
+.import-label:hover{background:var(--surface3);}
+.import-label input{display:none;}
+
+/* ═══ FORMS ═══ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:.28rem;}
+.field label{font-size:.66rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;}
+.field input,.field select,.field textarea{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.5rem .7rem;color:var(--text);font-size:.83rem;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field-full{grid-column:1/-1;}
+.field select option{background:var(--surface2);}
+.field input[type=color]{height:36px;padding:3px;cursor:pointer;}
+.field input[type=range]{accent-color:var(--accent);}
+
+/* ═══ SECTION HEADER ═══ */
+.sec-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap;}
+.sec-hd h2{font-family:var(--font-hd);font-size:.96rem;font-weight:600;letter-spacing:.04em;padding-top:.1rem;}
+.sec-hd .actions{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;}
+
+/* ═══ CARDS / KPI ═══ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem;}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.85rem;}
+@media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr);}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center;}
+.kpi-val{font-size:1.5rem;font-weight:900;color:var(--accent);font-family:var(--font-hd);line-height:1.1;}
+.kpi-lbl{font-size:.64rem;color:var(--text-muted);margin-top:.2rem;}
+
+/* ═══ MOBILE CARDS ═══ */
+@media(max-width:640px){
+  .mobile-cards table,.mobile-cards thead{display:none;}
+  .mobile-cards .tbl-wrap{border:none;overflow:visible;}
+}
+.mc-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem;margin-bottom:.5rem;}
+.mc-title{font-size:.83rem;font-weight:700;margin-bottom:.35rem;}
+.mc-row{display:flex;justify-content:space-between;font-size:.73rem;padding:.18rem 0;border-bottom:1px solid var(--border);}
+.mc-row:last-of-type{border-bottom:none;}
+.mc-lbl{color:var(--text-muted);}
+.mc-actions{display:flex;gap:.35rem;margin-top:.5rem;flex-wrap:wrap;}
+
+/* ═══ TABLE ═══ */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:10px;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:480px;}
+th{padding:.48rem .6rem;background:var(--surface);text-align:left;font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:.48rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle;line-height:1.4;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+
+/* ═══ BADGES ═══ */
+.badge{display:inline-block;padding:.15rem .42rem;border-radius:4px;font-size:.64rem;font-weight:600;}
+.badge-green{background:rgba(34,197,94,.13);color:#86efac;}
+.badge-yellow{background:rgba(234,179,8,.13);color:#fde047;}
+.badge-red{background:rgba(239,68,68,.13);color:#fca5a5;}
+.badge-blue{background:rgba(96,165,250,.13);color:#93c5fd;}
+.badge-accent{background:rgba(245,197,24,.13);color:var(--accent);}
+.master-tip{font-size:.69rem;color:var(--accent);line-height:1.4;font-style:italic;}
+
+/* ═══ MODAL ═══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:.75rem;overflow-y:auto;}
+.modal-bg.hidden{display:none;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;width:100%;max-width:600px;margin:auto;}
+@media(max-width:480px){.modal{border-radius:12px;padding:1rem;}}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;}
+.modal-hd h2{font-family:var(--font-hd);font-size:.92rem;font-weight:600;letter-spacing:.04em;}
+.close-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:.85rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.close-btn:hover{color:var(--text);background:var(--surface3);}
+.ob-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;gap:.75rem;}
+
+/* ═══ CHAT ═══ */
+.chat-scenarios{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.8rem;}
+.scenario-btn{padding:.3rem .7rem;background:var(--surface2);border:1px solid var(--border);border-radius:18px;font-size:.69rem;color:var(--text-muted);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.scenario-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,.06);}
+.chat-messages{background:var(--surface);border:1px solid var(--border);border-radius:12px;min-height:240px;max-height:400px;overflow-y:auto;padding:.8rem;display:flex;flex-direction:column;gap:.55rem;margin-bottom:.55rem;}
+.msg{display:flex;gap:.48rem;max-width:92%;}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.msg-avatar{width:26px;height:26px;border-radius:50%;background:rgba(245,197,24,.12);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;margin-top:2px;}
+.msg.user .msg-avatar{background:var(--surface3);}
+.msg-bubble{background:var(--surface2);border-radius:10px;padding:.48rem .75rem;font-size:.8rem;line-height:1.55;}
+.msg.user .msg-bubble{background:rgba(245,197,24,.12);}
+.msg-actions{display:flex;gap:.28rem;margin-top:.28rem;flex-wrap:wrap;}
+.ma-btn{padding:.18rem .48rem;border-radius:5px;font-size:.63rem;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);transition:all .2s;}
+.ma-btn:hover{border-color:var(--accent);color:var(--accent);}
+.thinking{font-size:.76rem;color:var(--text-dim);font-style:italic;padding:.4rem .75rem;}
+.chat-input-area{display:flex;gap:.38rem;}
+.chat-input-area textarea{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:.52rem .7rem;color:var(--text);font-size:.83rem;resize:none;outline:none;transition:border-color .2s;min-height:44px;max-height:100px;line-height:1.4;}
+.chat-input-area textarea:focus{border-color:var(--accent);}
+.send-btn{background:var(--accent);color:#0c0c0c;border:none;border-radius:9px;width:44px;height:44px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;}
+.send-btn:hover{filter:brightness(1.1);}
+.warn-bar{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:.55rem .8rem;font-size:.76rem;color:#fca5a5;margin-bottom:.55rem;}
+
+/* ═══ MISC ═══ */
+.report-area{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem;font-size:.79rem;line-height:1.75;color:var(--text-muted);min-height:140px;white-space:pre-wrap;}
+.search-bar{display:flex;gap:.4rem;margin-bottom:.8rem;}
+.search-bar input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.46rem .7rem;color:var(--text);font-size:.8rem;outline:none;}
+.search-bar input:focus{border-color:var(--accent);}
+.source-tabs{display:flex;gap:.28rem;flex-wrap:wrap;margin-bottom:.65rem;}
+.ct-btn{padding:.22rem .55rem;border-radius:5px;font-size:.67rem;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);transition:all .2s;}
+.ct-btn.active{background:rgba(245,197,24,.12);border-color:var(--accent);color:var(--accent);}
+.gap-sm{display:flex;gap:.38rem;flex-wrap:wrap;}
+.mt-sm{margin-top:.55rem;}
+.mt-md{margin-top:.9rem;}
+.divider{height:1px;background:var(--border);margin:.9rem 0;}
+.text-accent{color:var(--accent);}
+.text-muted{color:var(--text-muted);}
+.text-sm{font-size:.76rem;}
+.font-bold{font-weight:700;}
+.progress-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin:.3rem 0;}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s;}
+.mem-list{display:flex;flex-direction:column;gap:.25rem;max-height:90px;overflow-y:auto;margin-bottom:.35rem;}
+.mem-item{display:flex;justify-content:space-between;align-items:flex-start;gap:.35rem;background:var(--surface2);border-radius:5px;padding:.28rem .48rem;font-size:.69rem;}
+.mem-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.78rem;}
+.mem-del:hover{color:#ef4444;}
+.mem-section{margin-top:.8rem;}
+.mem-section h4{font-size:.67rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.32rem;}
+
+/* ═══ SMETA ═══ */
+.smeta-grid{display:grid;grid-template-columns:1fr;gap:.9rem;}
+@media(min-width:768px){.smeta-grid{grid-template-columns:1fr 1fr;}}
+.smeta-result{background:var(--surface);border:1px solid rgba(245,197,24,.22);border-radius:12px;padding:1.2rem;}
+.smeta-total{font-size:1.9rem;font-weight:900;color:var(--accent);margin:.3rem 0;font-family:var(--font-hd);}
+.smeta-row{display:flex;justify-content:space-between;align-items:center;padding:.38rem 0;border-bottom:1px solid var(--border);font-size:.78rem;}
+.smeta-row:last-child{border-bottom:none;}
+.smeta-row .rv{font-weight:700;color:var(--accent);}
+.slider-field{margin-bottom:.8rem;}
+.slider-field label{font-size:.71rem;color:var(--text-muted);display:flex;justify-content:space-between;margin-bottom:.28rem;}
+.slider-field input[type=range]{width:100%;}
+
+/* ═══ КС-2 ДОКУМЕНТ (для печати и экрана) ═══ */
+.ks2-doc{background:#fff;color:#000;border-radius:10px;padding:1.5rem;font-size:.82rem;line-height:1.6;border:1px solid var(--border);}
+.ks2-header{text-align:center;margin-bottom:1rem;}
+.ks2-header h3{font-size:1rem;font-weight:700;margin-bottom:.25rem;}
+.ks2-header p{font-size:.75rem;color:#444;}
+.ks2-reqs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;font-size:.75rem;}
+.ks2-req-block{border:1px solid #ccc;padding:.5rem;border-radius:4px;}
+.ks2-req-block strong{display:block;font-size:.68rem;color:#666;margin-bottom:.2rem;}
+.ks2-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.75rem;}
+.ks2-table th,.ks2-table td{border:1px solid #999;padding:.35rem .5rem;text-align:left;vertical-align:top;}
+.ks2-table th{background:#f0f0f0;font-weight:700;font-size:.68rem;text-align:center;}
+.ks2-table td{text-align:center;}
+.ks2-table td:nth-child(2){text-align:left;}
+.ks2-total{text-align:right;font-weight:700;font-size:.85rem;margin:.5rem 0;}
+.ks2-sigs{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem;font-size:.75rem;}
+.ks2-sig-block{border-top:1px solid #000;padding-top:.5rem;}
+.ks2-sig-block strong{display:block;font-size:.7rem;color:#555;margin-bottom:.75rem;}
+.ks2-sig-line{border-bottom:1px solid #999;height:1.5rem;margin-bottom:.25rem;}
+.ks2-sig-caption{font-size:.65rem;color:#666;text-align:center;}
+
+/* ═══ КАЛЬКУЛЯТОР ═══ */
+.calc-grid{display:grid;grid-template-columns:1fr;gap:.65rem;}
+@media(min-width:600px){.calc-grid{grid-template-columns:1fr 1fr;}}
+@media(min-width:1000px){.calc-grid{grid-template-columns:1fr 1fr 1fr;}}
+.calc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem;}
+.calc-card h4{font-family:var(--font-hd);font-size:.82rem;font-weight:600;letter-spacing:.04em;margin-bottom:.7rem;}
+.calc-result{background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);border-radius:7px;padding:.6rem .8rem;margin-top:.65rem;font-size:.79rem;line-height:1.5;color:var(--accent);font-weight:600;min-height:42px;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px;}
+
+/* ═══════════════════════════════════════
+   ✅ УЛУЧШЕНИЕ 5: PRINT CSS
+   Нормальная печать документов
+═══════════════════════════════════════ */
+@media print {
+  /* Скрываем интерфейс */
+  #splash, header, .bottom-nav,
+  .chat-scenarios, .settings-btn, .warn-bar,
+  .sec-hd .actions, .gap-sm, .tab-nav,
+  .btn-accent, .btn-outline, .btn-ghost, .btn-danger,
+  .import-label, .search-bar, .source-tabs,
+  .scenario-btn, .chat-input-area,
+  #panel-master, #panel-naryady, #panel-mats,
+  #panel-brig, #panel-calc, #panel-analytics,
+  #panel-smeta { display:none !important; }
+
+  body { background:#fff !important; color:#000 !important; font-size:11pt; }
+  .content { padding:0 !important; max-width:100% !important; padding-bottom:0 !important; }
+  .tab-panel { display:block !important; }
+  .tab-panel:not(.active) { display:none !important; }
+
+  /* Документы для печати */
+  .ks2-doc { border:none !important; padding:0 !important; }
+  .report-area { border:none !important; padding:0 !important; color:#000 !important; background:#fff !important; font-size:10pt; }
+  .ks2-table th { background:#f0f0f0 !important; -webkit-print-color-adjust:exact; }
+
+  /* Колонтитулы */
+  @page {
+    margin: 2cm 1.5cm;
+    @top-right { content: counter(page); }
+    @bottom-center { content: "СТ8 СТРОЙ | " attr(data-company); }
+  }
+
+  /* Разрывы страниц */
+  .ks2-doc { page-break-inside: avoid; }
+  .ks2-sigs { page-break-inside: avoid; }
+  h2, h3 { page-break-after: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="sp-logo"><span>СТ8</span> СТРОЙ</div>
+  <div class="sp-sub">МАСТЕР AI · Прораб нового поколения</div>
+  <div class="sp-bar-wrap"><div class="sp-bar" id="sp-bar"></div></div>
+  <div class="sp-pct" id="sp-pct">0%</div>
+  <div class="sp-hint">Стройка · Документация · Сметы · ГОСТ</div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="hd-brand">
+      <div class="hd-logo"><span>СТ8</span> СТРОЙ</div>
+      <div class="hd-obj" id="hd-obj"></div>
+    </div>
+    <nav class="tab-nav" id="tab-nav"></nav>
+    <div class="hd-right">
+      <div class="master-online">МАСТЕР онлайн 🟢</div>
+      <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    </div>
+  </header>
+  <div class="bottom-nav"><div class="bn-items" id="bn-items"></div></div>
+  <div class="content">
+    <div class="greeting-card">
+      <div class="gc-avatar">🦺</div>
+      <div class="gc-text" id="greeting-text">Загрузка...</div>
+    </div>
+    <div id="tab-panels"></div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="settings-modal">
+  <div class="modal">
+    <div class="modal-hd"><h2>⚙️ Настройки</h2><button class="close-btn" onclick="closeSettings()">✕</button></div>
+    <div id="settings-content"></div>
+  </div>
+</div>
+
+<script>
+// ══════ STORAGE ══════
+const S={
+  get:k=>{try{return JSON.parse(localStorage.getItem(k));}catch{return null;}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+  raw:k=>localStorage.getItem(k),
+  setRaw:(k,v)=>localStorage.setItem(k,v),
+};
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 1: РАСШИРЕННЫЕ РЕКВИЗИТЫ КОМПАНИИ
+// Теперь хранятся все данные для юридических документов
+// ══════════════════════════════════════════════════════
+let cfg = S.get('s_cfg') || {
+  company:'',city:'',manager:'',spec:'Общестроительные работы',
+  workers:0,hourRate:1200,revenue:2.5,markup:30,acc:'#F5C518',
+  // ✅ НОВЫЕ ПОЛЯ
+  inn:'',ogрn:'',address:'',
+  sroName:'',sroNum:'',sroDate:'',
+  contractNum:'',contractDate:'',
+};
+
+let mem=S.get('s_mem')||{wins:[],fails:[],notes:[],days:0,lastV:null};
+let chat=S.get('s_chat')||[];
+let naryady=S.get('s_nar')||[];
+let objects=S.get('s_obj')||[];
+let mats=S.get('s_mat')||[];
+let brig=S.get('s_brig')||[];
+let jWork=S.get('s_jw')||[];
+let jShift=S.get('s_js')||[];
+let jDef=S.get('s_jd')||[];
+let jTB=S.get('s_jtb')||[];
+let jAkt=S.get('s_jak')||[];
+let jInput=S.get('s_jin')||[];
+// ✅ НОВОЕ: КС-6а — журнал учёта выполненных работ
+let ks6a=S.get('s_ks6a')||[];
+let analData=S.get('s_an')||[];
+let costs=S.get('s_costs')||{rent:0,sal:0,eq:0,other:0};
+let chObj={};
+let jtab='work';
+let sSliders={wk:10,days:30,mat:500000,ovhd:15};
+
+if(!cfg.company){
+  cfg={...cfg,company:'Моя Компания',city:'Москва',manager:'Прораб'};
+  S.set('s_cfg',cfg);
+}
+if(!mem.days){mem={wins:[],fails:[],notes:[],days:1,lastV:new Date().toDateString()};S.set('s_mem',mem);}
+
+// ══════ TABS ══════
+const TABS=[
+  {id:'master',  ico:'🤖',lbl:'МАСТЕР'},
+  {id:'naryady', ico:'📋',lbl:'Наряды'},
+  {id:'objects', ico:'🏗️',lbl:'Объекты'},
+  {id:'mats',    ico:'🧱',lbl:'Материалы'},
+  {id:'brig',    ico:'👷',lbl:'Бригады'},
+  {id:'calc',    ico:'🧮',lbl:'Калькулятор'},
+  {id:'journals',ico:'📓',lbl:'Журналы'},
+  {id:'analytics',ico:'📊',lbl:'Аналитика'},
+  {id:'smeta',   ico:'💰',lbl:'Смета'},
+  {id:'report',  ico:'📤',lbl:'Отчёт'},
+];
+const BN_TABS=['master','naryady','objects','mats','journals','smeta'];
+
+const SCEN=['⚡ Наряд на работы','⚡ Акт КС-2','⚡ Заявка на материалы','⚡ Журнал ТБ на день','⚡ Дефектный акт','⚡ Расчёт объёмов','⚡ Письмо заказчику','⚡ Чек-лист закрытия смены','⚡ Норма выработки (ЕНиР)','⚡ КС-3 справка о стоимости','⚡ Акт скрытых работ','⚡ Ответ на претензию','⚡ Предписание субподрядчику','⚡ Протокол совещания','⚡ Вводный инструктаж ТБ'];
+
+const KB=`Знания прораба: ведёшь ОВР/КС-6а (ежедневный учёт выполненных работ), журнал ТБ, дефектный акт, журнал входного контроля материалов (ГОСТ/ТУ/сертификаты), акты освидетельствования скрытых работ по приказу Минстроя №344/пр от 16.05.2023. Знаешь нормы ЕНиР/ГЭСН, СНиП, СП 48.13330.2019. Составляешь КС-2 (Постановление Госкомстата №100 от 1999), КС-3, КС-6а, сметы, наряды, исполнительную документацию.`;
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 1: SP() ВКЛЮЧАЕТ РЕКВИЗИТЫ КОМПАНИИ
+// Теперь AI знает ИНН/ОГРН/СРО — документы правильные
+// ══════════════════════════════════════════════════════
+const SP=()=>{
+  const reqs=cfg.inn?`ИНН: ${cfg.inn}, ОГРН: ${cfg.ogrn||'—'}, Адрес: ${cfg.address||'—'}, СРО: ${cfg.sroName||'—'} №${cfg.sroNum||'—'} от ${cfg.sroDate||'—'}.`:'⚠️ Реквизиты не заполнены — заполни в настройках для корректных документов.';
+  return `Ты МАСТЕР — персональный AI-прораб компании "${cfg.company}" в ${cfg.city}. Прораб: ${cfg.manager}. Специализация: ${cfg.spec}. Рабочих: ${cfg.workers}. Ставка: ${cfg.hourRate}₽/час. Надбавка: ${cfg.markup}%. Работаю с ними ${mem.days} дней. ${reqs} Сработало: ${mem.wins.slice(0,3).join('; ')||'—'}. Не работает: ${mem.fails.slice(0,3).join('; ')||'—'}. НЕЛЬЗЯ: нарушать СНиП/ГОСТ, принимать бракованные материалы, скрывать дефекты. МОЖНО: оптимизировать технологии, снижать простои, предлагать аналоги с сохранением характеристик. Отвечай конкретно с цифрами и ссылками на нормативы. Без Markdown. ${KB}`;
+};
+
+// ══════ INIT ══════
+function showSplash(cb){
+  const bar=document.getElementById('sp-bar'),pct=document.getElementById('sp-pct'),sp=document.getElementById('splash');
+  let p=0;const steps=[[300,30],[200,65],[150,88],[100,100]];let i=0;
+  function next(){if(i>=steps.length){setTimeout(()=>{sp.classList.add('fade');setTimeout(()=>{sp.style.display='none';cb();},500);},200);return;}const[delay,target]=steps[i++];const inc=(target-p)/(delay/16);const tick=setInterval(()=>{p=Math.min(p+inc,target);bar.style.width=p+'%';pct.textContent=Math.round(p)+'%';if(p>=target){clearInterval(tick);setTimeout(next,80);}},16);}
+  next();
+}
+function init(){applyAcc();updateDays();showSplash(showApp);}
+function applyAcc(){document.documentElement.style.setProperty('--accent',cfg.acc||'#F5C518');}
+function updateDays(){const t=new Date().toDateString();if(mem.lastV!==t){mem.days=(mem.days||0)+1;mem.lastV=t;S.set('s_mem',mem);}}
+
+function showApp(){
+  document.getElementById('app').style.display='flex';
+  document.getElementById('hd-obj').textContent=cfg.company||'';
+  buildGreeting();buildTabs();buildPanels();switchTab('master');
+  // Предупреждение если реквизиты не заполнены
+  if(!cfg.inn) setTimeout(()=>showReqsWarning(),1000);
+}
+
+function showReqsWarning(){
+  const el=document.getElementById('greeting-text');
+  if(el) el.innerHTML+=' <span style="color:#fca5a5;font-size:.75rem">⚠️ <a href="#" onclick="openSettings();return false;" style="color:#fca5a5">Заполните реквизиты компании</a> — без них документы юридически недействительны.</span>';
+}
+
+function buildGreeting(){
+  const d=new Date(),day=d.getDay(),h=d.getHours();
+  const days=['воскресенье','понедельник','вторник','среду','четверг','пятницу','субботу'];
+  let tip;
+  if(h>=5&&h<9)tip='Чек-лист открытия смены и КС-6а — готов.';
+  else if(h>=17)tip='Закрываем смену? Подведём итоги дня.';
+  else if(day===1)tip='Начало недели — планируем объёмы и бригады?';
+  else if(day===5)tip='Пятница — время актов КС-2 и отчётов заказчику.';
+  else if(mem.wins.length)tip=`Помню: ${mem.wins[mem.wins.length-1]}`;
+  else tip='Готов помочь — задай вопрос или выбери сценарий ниже.';
+  const fn=(cfg.manager||'Прораб').split(' ')[0];
+  document.getElementById('greeting-text').innerHTML=`<strong>Привет, ${fn}!</strong> Я МАСТЕР. Сегодня ${days[day]}. ${tip}`;
+}
+
+function buildTabs(){
+  document.getElementById('tab-nav').innerHTML=TABS.map(t=>`<button class="tab-btn" id="tb-${t.id}" onclick="switchTab('${t.id}')"><span class="ti">${t.ico}</span><span class="tl">${t.lbl}</span></button>`).join('');
+  document.getElementById('bn-items').innerHTML=BN_TABS.map(id=>{const t=TABS.find(x=>x.id===id);return`<button class="bn-btn" id="bn-${id}" onclick="switchTab('${id}')"><span class="bni">${t.ico}</span>${t.lbl}</button>`;}).join('');
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab-btn,.bn-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tb-'+id)?.classList.add('active');
+  document.getElementById('bn-'+id)?.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id)?.classList.add('active');
+  if(id==='analytics')setTimeout(renderCharts,120);
+  if(id==='smeta')setTimeout(renderSmeta,50);
+}
+
+function buildPanels(){
+  const map={master:panelMaster,naryady:panelNaryady,objects:panelObjects,mats:panelMats,brig:panelBrig,calc:panelCalc,journals:panelJournals,analytics:panelAnalytics,smeta:panelSmeta,report:panelReport};
+  document.getElementById('tab-panels').innerHTML=TABS.map(t=>`<div class="tab-panel" id="panel-${t.id}">${(map[t.id]||(() => '<div class="card"><p class="text-muted">Скоро</p></div>'))()}</div>`).join('');
+}
+
+const H=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+const A=s=>String(s).replace(/'/g,"\\'").replace(/\n/g,' ');
+const fmt=v=>Number(v||0).toLocaleString('ru');
+const now=()=>new Date().toISOString().slice(0,10);
+const hideM=id=>document.getElementById(id)?.classList.add('hidden');
+const copyReport=sel=>{const el=document.querySelector(sel);if(!el)return;navigator.clipboard.writeText(el.innerText||el.textContent).then(()=>alert('Скопировано!'));};
+
+// ══════ AI HELPERS ══════
+async function aiCall(prompt,max=900){
+  const key=S.raw('st8_api_key');if(!key)throw new Error('Нужен API ключ');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:max,system:SP(),messages:[{role:'user',content:prompt}]})});
+  if(!r.ok){const e=await r.text();throw new Error(e.slice(0,120));}
+  const d=await r.json();return d.content?.[0]?.text||'';
+}
+
+async function parseJSON(key,text,prompt){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1500,system:'Отвечай только JSON массивом без пояснений и markdown.',messages:[{role:'user',content:prompt+'\n\nДанные:\n'+text.slice(0,3000)}]})});
+  const d=await r.json();const raw=d.content?.[0]?.text||'';
+  const m=raw.match(/\[[\s\S]*\]/);if(!m)throw new Error('Не удалось распознать данные');
+  return JSON.parse(m[0]);
+}
+
+function readFile(file,cb){
+  if(!file)return;const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];cb(XLSX.utils.sheet_to_json(ws,{header:1}).map(r=>r.join('\t')).join('\n'));};r.readAsArrayBuffer(file);}
+  else{const r=new FileReader();r.onload=e=>cb(e.target.result);r.readAsText(file,'utf-8');}
+}
+
+// ══════ PANEL: МАСТЕР ══════
+function panelMaster(){
+  const hasKey=!!S.raw('st8_api_key');
+  return`
+    ${!hasKey?`<div class="warn-bar">⚠️ API ключ не указан. <a href="#" onclick="openSettings();return false;" style="color:var(--accent)">Добавьте в настройках →</a></div>`:''}
+    ${!cfg.inn?`<div class="warn-bar">⚠️ Реквизиты не заполнены — документы юридически недействительны. <a href="#" onclick="openSettings();return false;" style="color:var(--accent)">Заполнить →</a></div>`:''}
+    <div class="chat-scenarios">${SCEN.map(s=>`<button class="scenario-btn" onclick="doMsg('${A(s.replace(/^⚡\s*/,''))}')">${s}</button>`).join('')}</div>
+    <div class="chat-messages" id="chat-msgs">${renderMsgs()}</div>
+    <div class="chat-input-area">
+      <textarea id="chat-inp" placeholder="Спросить МАСТЕРА..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="send-btn" onclick="sendMsg()">↑</button>
+    </div>`;
+}
+
+function renderMsgs(){
+  if(!chat.length)return'<div style="color:var(--text-dim);font-size:.78rem;text-align:center;padding:2rem">Начните диалог с МАСТЕРОМ</div>';
+  return chat.map((m,i)=>{
+    const u=m.role==='user',isLast=!u&&i===chat.length-1;
+    return`<div class="msg ${u?'user':''}"><div class="msg-avatar">${u?'👷':'🦺'}</div><div><div class="msg-bubble">${H(m.content)}</div>${isLast?`<div class="msg-actions"><button class="ma-btn" onclick="memFb('wins',${i})">✅ Сработало</button><button class="ma-btn" onclick="memFb('fails',${i})">❌ Не подходит</button><button class="ma-btn" onclick="memFb('notes',${i})">📝 Заметка</button></div>`:''}</div></div>`;
+  }).join('');
+}
+function scrollChat(){const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;}
+function sendMsg(){const inp=document.getElementById('chat-inp');if(!inp)return;const t=inp.value.trim();if(!t)return;inp.value='';inp.style.height='auto';doMsg(t);}
+async function doMsg(text){
+  const key=S.raw('st8_api_key');if(!key){openSettings();return;}
+  chat.push({role:'user',content:text});S.set('s_chat',chat.slice(-20));
+  const msgs=document.getElementById('chat-msgs');
+  if(msgs){msgs.innerHTML=renderMsgs();scrollChat();const th=document.createElement('div');th.className='thinking';th.id='thinking';th.textContent='МАСТЕР думает...';msgs.appendChild(th);scrollChat();}
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:2000,system:SP(),messages:chat.slice(-12).map(m=>({role:m.role,content:m.content}))})});
+    document.getElementById('thinking')?.remove();
+    if(!r.ok){const e=await r.text();throw new Error(e.slice(0,120));}
+    const d=await r.json();const reply=d.content?.[0]?.text||'Ошибка ответа';
+    chat.push({role:'assistant',content:reply});S.set('s_chat',chat.slice(-20));
+  }catch(e){document.getElementById('thinking')?.remove();chat.push({role:'assistant',content:`Ошибка: ${e.message}`});}
+  if(msgs){msgs.innerHTML=renderMsgs();scrollChat();}
+}
+function memFb(type,idx){const short=(chat[idx]?.content||'').slice(0,80);mem[type].push(short);S.set('s_mem',mem);alert(type==='wins'?'✅ Сработало':type==='fails'?'❌ Не работает':'📝 Заметка сохранена');}
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 4: НАРЯДЫ — ОБЪЕКТ ИЗ ВЫПАДАЮЩЕГО СПИСКА
+// Связь наряд ↔ объект — не просто текст
+// ══════════════════════════════════════════════════════
+function panelNaryady(){
+  const rows=naryady.map((n,i)=>{
+    const sc={draft:'badge-yellow',active:'badge-blue',done:'badge-green',cancelled:'badge-red'}[n.status]||'badge-yellow';
+    const sl={draft:'Черновик',active:'В работе',done:'Выполнен',cancelled:'Отменён'}[n.status]||n.status;
+    // Найти объект по id
+    const objName=objects.find(o=>o.id===n.objectId)?.name||n.objectId||'—';
+    return`<div class="mc-item">
+      <div class="mc-title">${H(n.title)} <span class="badge ${sc}">${sl}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Объект</span><span style="color:var(--accent)">${H(objName)}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Бригада</span><span>${H(n.brigade||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Сроки</span><span>${n.startDate||'—'} → ${n.endDate||'—'}</span></div>
+      ${n.volume?`<div class="mc-row"><span class="mc-lbl">Объём</span><span>${H(n.volume)}</span></div>`:''}
+      <div class="mc-actions">
+        <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="genAkt(${i})">📋 КС-2</button>
+        <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="changeNarStatus(${i})">🔄</button>
+        <button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delNar(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нарядов нет</div>';
+
+  // Выпадающий список объектов для фильтра
+  const objFilter=objects.length?`<select onchange="filterByObj(this.value)" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.38rem .65rem;color:var(--text);font-size:.78rem;outline:none;"><option value="">Все объекты</option>${objects.map(o=>`<option value="${o.id}">${H(o.name)}</option>`).join('')}</select>`:'';
+
+  return`
+    <div class="sec-hd"><h2>📋 Наряды</h2>
+      <div class="actions">
+        ${objFilter}
+        <label class="import-label">📂<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importNaryady(this)"></label>
+        <button class="btn btn-ghost" onclick="document.getElementById('nm').classList.remove('hidden')">+ Вручную</button>
+        <button class="btn btn-accent" onclick="document.getElementById('ng').classList.remove('hidden')">🤖 МАСТЕР</button>
+      </div>
+    </div>
+    <div id="mc-nar" class="mobile-cards">${rows}</div>
+    <div id="nar-res" class="mt-sm"></div>
+
+    <div class="modal-bg hidden" id="nm">
+      <div class="modal">
+        <div class="modal-hd"><h2>Новый наряд</h2><button class="close-btn" onclick="hideM('nm')">✕</button></div>
+        <div class="form-grid">
+          <div class="field field-full"><label>Вид работ *</label><input id="nm-t" placeholder="Кладка кирпича М150, стяжка пола..."></div>
+          <!-- ✅ ВЫПАДАЮЩИЙ СПИСОК ОБЪЕКТОВ -->
+          <div class="field field-full"><label>Объект</label>
+            <select id="nm-oid">
+              <option value="">— выберите объект —</option>
+              ${objects.map(o=>`<option value="${o.id}">${H(o.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Бригада</label><input id="nm-b" placeholder="Бригада Иванова"></div>
+          <div class="field"><label>Начало</label><input id="nm-s" type="date" value="${now()}"></div>
+          <div class="field"><label>Окончание</label><input id="nm-e" type="date"></div>
+          <div class="field"><label>Статус</label><select id="nm-st"><option value="draft">Черновик</option><option value="active">В работе</option><option value="done">Выполнен</option></select></div>
+          <div class="field field-full"><label>Объём работ (для КС-6а / КС-2)</label><textarea id="nm-v" rows="2" placeholder="120 м² штукатурки, слой 20мм, марка М150..."></textarea></div>
+          <div class="field field-full"><label>Ед. изм. / кол-во</label><input id="nm-unit" placeholder="м², 120"></div>
+          <div class="field"><label>Цена единицы ₽</label><input id="nm-price" type="number" placeholder="850"></div>
+          <div class="field"><label>Сумма ₽ (итог)</label><input id="nm-sum" type="number" placeholder="102000"></div>
+        </div>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveNar()">Сохранить</button></div>
+      </div>
+    </div>
+
+    <div class="modal-bg hidden" id="ng">
+      <div class="modal">
+        <div class="modal-hd"><h2>🤖 Наряд через МАСТЕР</h2><button class="close-btn" onclick="hideM('ng')">✕</button></div>
+        <div class="field" style="margin-bottom:.65rem"><label>Выберите объект</label>
+          <select id="ng-oid"><option value="">— выберите —</option>${objects.map(o=>`<option value="${o.id}">${H(o.name)}</option>`).join('')}</select>
+        </div>
+        <div class="field" style="margin-bottom:.75rem"><label>Опишите работы</label><textarea id="ng-inp" rows="4" placeholder="Штукатурка стен 80м² гипсовой смесью, 3 штукатура, 5 рабочих дней..."></textarea></div>
+        <button class="btn btn-accent" onclick="aiGenNar()">🤖 Сформировать</button>
+        <div id="ng-res" class="mt-sm"></div>
+      </div>
+    </div>`;
+}
+
+function filterByObj(objId){
+  document.querySelectorAll('#mc-nar .mc-item').forEach((el,i)=>{
+    if(!objId){el.style.display='';return;}
+    const n=naryady[i];
+    el.style.display=(n&&n.objectId===objId)?'':'none';
+  });
+}
+
+function saveNar(){
+  const t=document.getElementById('nm-t').value.trim();if(!t){alert('Укажите вид работ');return;}
+  naryady.push({
+    id:'n'+Date.now(),
+    title:t,
+    objectId:document.getElementById('nm-oid').value,
+    brigade:document.getElementById('nm-b').value,
+    startDate:document.getElementById('nm-s').value,
+    endDate:document.getElementById('nm-e').value,
+    status:document.getElementById('nm-st').value,
+    volume:document.getElementById('nm-v').value,
+    unit:document.getElementById('nm-unit').value,
+    price:+document.getElementById('nm-price').value||0,
+    sum:+document.getElementById('nm-sum').value||0,
+  });
+  S.set('s_nar',naryady);hideM('nm');document.getElementById('panel-naryady').innerHTML=panelNaryady();
+}
+
+function delNar(i){if(!confirm('Удалить наряд?'))return;naryady.splice(i,1);S.set('s_nar',naryady);document.getElementById('panel-naryady').innerHTML=panelNaryady();}
+function changeNarStatus(i){const s=['draft','active','done','cancelled'];naryady[i].status=s[(s.indexOf(naryady[i].status)+1)%s.length];S.set('s_nar',naryady);document.getElementById('panel-naryady').innerHTML=panelNaryady();}
+
+async function aiGenNar(){
+  const text=document.getElementById('ng-inp').value.trim();if(!text){alert('Опишите работы');return;}
+  const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  const objId=document.getElementById('ng-oid').value;
+  const objName=objects.find(o=>o.id===objId)?.name||'';
+  const el=document.getElementById('ng-res');el.innerHTML='<div class="thinking">МАСТЕР формирует наряд...</div>';
+  try{
+    const r=await aiCall(`Составь наряд на работы${objName?` для объекта "${objName}"`:''}. Описание: ${text}. Включи: наименование работ, объём (м²/м³/п.м), ед.измерения, норму выработки по ЕНиР, состав бригады, сроки, требования качества, СНиП/ГОСТ. Без Markdown.`);
+    el.innerHTML=`<div class="report-area" style="max-height:200px;overflow-y:auto;font-size:.77rem;margin-bottom:.65rem">${H(r)}</div>
+      <div class="gap-sm"><button class="btn btn-accent" onclick="saveNarAI('${A(text.slice(0,60))}','${objId}')">💾 Сохранить</button><button class="btn btn-outline" onclick="copyReport('#ng-res .report-area')">📋 Копировать</button></div>`;
+  }catch(e){el.innerHTML=`<p style="color:#fca5a5">Ошибка: ${e.message}</p>`;}
+}
+function saveNarAI(title,objId){naryady.push({id:'n'+Date.now(),title,objectId:objId,brigade:'',startDate:now(),endDate:'',status:'draft',volume:'',unit:'',price:0,sum:0});S.set('s_nar',naryady);hideM('ng');document.getElementById('panel-naryady').innerHTML=panelNaryady();}
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 3: genAkt — РЕАЛЬНАЯ ФОРМА КС-2
+// Берёт данные из КС-6а + реквизиты из настроек
+// ══════════════════════════════════════════════════════
+function genAkt(i){
+  const n=naryady[i];if(!n)return;
+  const obj=objects.find(o=>o.id===n.objectId);
+
+  // Берём записи КС-6а для этого наряда
+  const ks6rows=ks6a.filter(r=>r.narId===n.id||r.narTitle===n.title);
+  const totalQty=ks6rows.reduce((s,r)=>s+(+r.qty||0),0);
+  const totalSum=n.sum||ks6rows.reduce((s,r)=>s+(+r.sum||0),0);
+
+  const ks2Num='КС-2/'+new Date().getFullYear()+'/'+String(naryady.indexOf(n)+1).padStart(3,'0');
+  const today=new Date().toLocaleDateString('ru');
+
+  // Строка таблицы КС-2
+  const tableRow=`<tr>
+    <td>1</td>
+    <td style="text-align:left">${n.title}</td>
+    <td>${n.unit||'—'}</td>
+    <td>${totalQty||n.volume||'—'}</td>
+    <td>${fmt(n.price||0)}</td>
+    <td>${fmt(totalSum)}</td>
+  </tr>`;
+
+  const reqsWarning=!cfg.inn?'<div style="color:#fca5a5;font-size:.8rem;margin-bottom:1rem;padding:.5rem;background:rgba(239,68,68,.1);border-radius:6px;">⚠️ Реквизиты компании не заполнены! Заполните в настройках для юридически действительного документа.</div>':'';
+
+  const html=`
+    ${reqsWarning}
+    <div class="ks2-doc" id="ks2-print">
+      <div class="ks2-header">
+        <div style="font-size:.72rem;color:#666;margin-bottom:.5rem">Унифицированная форма № КС-2<br>Утверждена Постановлением Госкомстата России от 11.11.1999 № 100</div>
+        <h3>АКТ О ПРИЁМКЕ ВЫПОЛНЕННЫХ РАБОТ</h3>
+        <p>№ ${ks2Num} от ${today}</p>
+      </div>
+
+      <div class="ks2-reqs">
+        <div class="ks2-req-block">
+          <strong>Заказчик</strong>
+          ${obj?.client||'_________________________'}<br>
+          ИНН: _________________ ОГРН: _________________<br>
+          СРО: _________________________________
+        </div>
+        <div class="ks2-req-block">
+          <strong>Подрядчик</strong>
+          ${cfg.company}<br>
+          ИНН: ${cfg.inn||'_____________'} ОГРН: ${cfg.ogrn||'_____________'}<br>
+          СРО: ${cfg.sroName||'—'} № ${cfg.sroNum||'—'} от ${cfg.sroDate||'—'}
+        </div>
+        <div class="ks2-req-block">
+          <strong>Объект строительства</strong>
+          ${obj?.name||n.objectId||'_________________________'}<br>
+          Адрес: ${obj?.address||'_________________________'}
+        </div>
+        <div class="ks2-req-block">
+          <strong>Договор подряда</strong>
+          № ${cfg.contractNum||'___'} от ${cfg.contractDate||'___'}<br>
+          Отчётный период: ${n.startDate||'___'} — ${n.endDate||today}
+        </div>
+      </div>
+
+      <table class="ks2-table">
+        <thead>
+          <tr>
+            <th style="width:40px">№</th>
+            <th style="width:35%;text-align:left">Наименование работ и затрат</th>
+            <th>Ед. изм.</th>
+            <th>Кол-во</th>
+            <th>Цена за ед. ₽</th>
+            <th>Стоимость ₽</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRow}
+          ${ks6rows.length>0?ks6rows.map((r,idx)=>`<tr style="font-size:.7rem;color:#666"><td></td><td style="text-align:left;padding-left:1rem">• ${r.date}: ${r.workDesc||''}</td><td></td><td>${r.qty||'—'}</td><td></td><td></td></tr>`).join(''):''}
+        </tbody>
+      </table>
+      <div class="ks2-total">Итого: ${fmt(totalSum)} руб.</div>
+      <div style="font-size:.75rem;color:#666;margin-bottom:1rem">
+        НДС ${cfg.nds||0}%: ${fmt(Math.round(totalSum*(+(cfg.nds||0)/100)))} руб.<br>
+        <strong>Всего с НДС: ${fmt(Math.round(totalSum*(1+(+(cfg.nds||0)/100))))} руб.</strong>
+      </div>
+
+      <div class="ks2-sigs">
+        <div class="ks2-sig-block">
+          <strong>Сдал: Подрядчик</strong>
+          <div class="ks2-sig-line"></div>
+          <div class="ks2-sig-caption">${cfg.manager||'_______________'} / подпись / дата</div>
+          <div style="margin-top:.5rem;font-size:.7rem;color:#666">М.П.</div>
+        </div>
+        <div class="ks2-sig-block">
+          <strong>Принял: Заказчик</strong>
+          <div class="ks2-sig-line"></div>
+          <div class="ks2-sig-caption">_______________  / подпись / дата</div>
+          <div style="margin-top:.5rem;font-size:.7rem;color:#666">М.П.</div>
+        </div>
+        <div class="ks2-sig-block">
+          <strong>Технадзор</strong>
+          <div class="ks2-sig-line"></div>
+          <div class="ks2-sig-caption">_______________ / подпись / дата</div>
+        </div>
+        <div class="ks2-sig-block">
+          <strong>Авторский надзор</strong>
+          <div class="ks2-sig-line"></div>
+          <div class="ks2-sig-caption">_______________ / подпись / дата</div>
+        </div>
+      </div>
+    </div>
+    <div class="gap-sm mt-sm">
+      <button class="btn btn-success" onclick="window.print()">🖨️ Печать / PDF</button>
+      <button class="btn btn-outline" onclick="copyReport('#ks2-print')">📋 Копировать текст</button>
+    </div>`;
+
+  const el=document.getElementById('nar-res');
+  if(el) el.innerHTML=html;
+  el.scrollIntoView({behavior:'smooth'});
+}
+
+async function importNaryady(input){
+  const f=input.files[0];if(!f)return;input.value='';
+  const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  readFile(f,async text=>{
+    try{
+      const items=await parseJSON(key,text,'Извлеки список нарядов. JSON: [{title,brigade,startDate,volume,unit,price,sum,status}]. startDate=YYYY-MM-DD, status="draft"|"active"|"done". Макс 50.');
+      items.forEach(it=>naryady.push({id:'n'+Date.now()+Math.random(),objectId:'',...it}));
+      S.set('s_nar',naryady);alert(`✅ Импортировано ${items.length} нарядов`);
+      document.getElementById('panel-naryady').innerHTML=panelNaryady();
+    }catch(e){alert('Ошибка: '+e.message);}
+  });
+}
+
+// ══════ PANEL: ОБЪЕКТЫ ══════
+function panelObjects(){
+  const total=objects.reduce((s,o)=>s+(o.budget||0),0);
+  const act=objects.filter(o=>o.status==='active').length;
+  const items=objects.map((o,i)=>{
+    const sc={active:'badge-green',paused:'badge-yellow',done:'badge-blue',cancelled:'badge-red'}[o.status]||'badge-yellow';
+    const sl={active:'В работе',paused:'Пауза',done:'Сдан',cancelled:'Отменён'}[o.status]||o.status;
+    const objNaryady=naryady.filter(n=>n.objectId===o.id);
+    const p=o.progress||0;
+    return`<div class="mc-item">
+      <div class="mc-title">${H(o.name)} <span class="badge ${sc}">${sl}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Заказчик</span><span>${H(o.client||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Адрес</span><span>${H(o.address||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Дедлайн</span><span>${o.deadline||'—'}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Бюджет</span><span class="text-accent font-bold">${fmt(o.budget||0)} ₽</span></div>
+      <div class="mc-row"><span class="mc-lbl">Нарядов</span><span class="badge badge-blue">${objNaryady.length}</span></div>
+      <div style="margin:.4rem 0">
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-bottom:.2rem"><span>Прогресс</span><span style="color:var(--accent)">${p}%</span></div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${p}%"></div></div>
+      </div>
+      <div class="mc-actions">
+        <button class="btn btn-success" style="font-size:.68rem;padding:.2rem .5rem" onclick="genKS2forObject(${i})">📄 КС-2 по объекту</button>
+        <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="updProgress(${i})">% прогресс</button>
+        <button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delObj(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет объектов</div>';
+
+  return`
+    <div class="sec-hd"><h2>🏗️ Объекты</h2>
+      <div class="actions">
+        <label class="import-label">📂<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importObjects(this)"></label>
+        <button class="btn btn-accent" onclick="document.getElementById('om').classList.remove('hidden')">+ Объект</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${act}</div><div class="kpi-lbl">Активных</div></div>
+      <div class="kpi"><div class="kpi-val">${objects.length}</div><div class="kpi-lbl">Всего</div></div>
+      <div class="kpi"><div class="kpi-val">${(total/1e6).toFixed(1)}М</div><div class="kpi-lbl">Бюджет ₽</div></div>
+      <div class="kpi"><div class="kpi-val">${naryady.length}</div><div class="kpi-lbl">Нарядов</div></div>
+    </div>
+    <div id="mc-obj" class="mobile-cards">${items}</div>
+    <div id="obj-ks2" class="mt-sm"></div>
+
+    <div class="modal-bg hidden" id="om">
+      <div class="modal">
+        <div class="modal-hd"><h2>Новый объект</h2><button class="close-btn" onclick="hideM('om')">✕</button></div>
+        <div class="form-grid">
+          <div class="field field-full"><label>Название *</label><input id="om-n" placeholder="ЖК Солнечный, секция А"></div>
+          <div class="field field-full"><label>Адрес</label><input id="om-a" placeholder="г. Москва, ул. Ленина 5"></div>
+          <div class="field field-full"><label>Заказчик</label><input id="om-c" placeholder="ООО Застройщик"></div>
+          <div class="field field-full"><label>ИНН заказчика</label><input id="om-cinn" placeholder="7700000000"></div>
+          <div class="field"><label>Дедлайн</label><input id="om-d" type="date"></div>
+          <div class="field"><label>Бюджет ₽</label><input id="om-b" type="number" placeholder="5000000"></div>
+          <div class="field"><label>Прогресс %</label><input id="om-p" type="number" min="0" max="100" placeholder="0"></div>
+          <div class="field"><label>Статус</label><select id="om-s"><option value="active">В работе</option><option value="paused">Пауза</option><option value="done">Сдан</option></select></div>
+        </div>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveObj()">Сохранить</button></div>
+      </div>
+    </div>`;
+}
+
+function saveObj(){
+  const n=document.getElementById('om-n').value.trim();if(!n){alert('Укажите название');return;}
+  objects.push({id:'obj'+Date.now(),name:n,address:document.getElementById('om-a').value,client:document.getElementById('om-c').value,clientInn:document.getElementById('om-cinn').value,deadline:document.getElementById('om-d').value,budget:+document.getElementById('om-b').value||0,progress:+document.getElementById('om-p').value||0,status:document.getElementById('om-s').value});
+  S.set('s_obj',objects);hideM('om');document.getElementById('panel-objects').innerHTML=panelObjects();
+}
+function delObj(i){if(!confirm('Удалить?'))return;objects.splice(i,1);S.set('s_obj',objects);document.getElementById('panel-objects').innerHTML=panelObjects();}
+function updProgress(i){const p=prompt('Прогресс %:',objects[i].progress||0);if(p===null)return;objects[i].progress=Math.max(0,Math.min(100,+p||0));S.set('s_obj',objects);document.getElementById('panel-objects').innerHTML=panelObjects();}
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 3: КС-2 ПО ОБЪЕКТУ
+// Собирает ВСЕ наряды объекта + данные из КС-6а
+// ══════════════════════════════════════════════════════
+function genKS2forObject(i){
+  const obj=objects[i];if(!obj)return;
+  const objNaryady=naryady.filter(n=>n.objectId===obj.id);
+  if(!objNaryady.length){alert('Нет нарядов для этого объекта. Добавьте наряды и свяжите их с объектом.');return;}
+
+  const ks2Num='КС-2/'+new Date().getFullYear()+'/'+String(i+1).padStart(3,'0');
+  const today=new Date().toLocaleDateString('ru');
+  const totalSum=objNaryady.reduce((s,n)=>s+(n.sum||0),0);
+
+  const tableRows=objNaryady.map((n,idx)=>`<tr>
+    <td>${idx+1}</td>
+    <td style="text-align:left">${n.title}</td>
+    <td>${n.unit||'—'}</td>
+    <td>${n.volume||'—'}</td>
+    <td>${fmt(n.price||0)}</td>
+    <td>${fmt(n.sum||0)}</td>
+  </tr>`).join('');
+
+  const reqsWarning=!cfg.inn?'<div style="color:#ef4444;font-size:.8rem;margin-bottom:1rem;padding:.5rem;background:rgba(239,68,68,.08);border-radius:6px;">⚠️ Реквизиты не заполнены!</div>':'';
+
+  const html=`
+    ${reqsWarning}
+    <div class="ks2-doc" id="ks2-obj-print">
+      <div class="ks2-header">
+        <div style="font-size:.72rem;color:#666;margin-bottom:.5rem">Унифицированная форма № КС-2 · Постановление Госкомстата России от 11.11.1999 № 100</div>
+        <h3>АКТ О ПРИЁМКЕ ВЫПОЛНЕННЫХ РАБОТ</h3>
+        <p>№ ${ks2Num} от ${today}</p>
+      </div>
+      <div class="ks2-reqs">
+        <div class="ks2-req-block"><strong>Заказчик</strong>${obj.client||'—'}<br>ИНН: ${obj.clientInn||'—'}</div>
+        <div class="ks2-req-block"><strong>Подрядчик</strong>${cfg.company}<br>ИНН: ${cfg.inn||'—'} ОГРН: ${cfg.ogrn||'—'}<br>СРО: ${cfg.sroName||'—'} №${cfg.sroNum||'—'}</div>
+        <div class="ks2-req-block"><strong>Объект</strong>${obj.name}<br>Адрес: ${obj.address||'—'}</div>
+        <div class="ks2-req-block"><strong>Договор</strong>№ ${cfg.contractNum||'—'} от ${cfg.contractDate||'—'}<br>Бюджет: ${fmt(obj.budget||0)} ₽</div>
+      </div>
+      <table class="ks2-table">
+        <thead><tr><th>№</th><th style="text-align:left">Наименование работ</th><th>Ед.изм</th><th>Объём</th><th>Цена ₽</th><th>Стоимость ₽</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="ks2-total">Итого: ${fmt(totalSum)} руб.</div>
+      <div class="ks2-sigs">
+        <div class="ks2-sig-block"><strong>Сдал: Подрядчик</strong><div class="ks2-sig-line"></div><div class="ks2-sig-caption">${cfg.manager} / подпись / дата</div><div style="margin-top:.5rem;font-size:.7rem;color:#666">М.П.</div></div>
+        <div class="ks2-sig-block"><strong>Принял: Заказчик</strong><div class="ks2-sig-line"></div><div class="ks2-sig-caption">_______________ / подпись / дата</div><div style="margin-top:.5rem;font-size:.7rem;color:#666">М.П.</div></div>
+        <div class="ks2-sig-block"><strong>Технадзор</strong><div class="ks2-sig-line"></div><div class="ks2-sig-caption">_______________ / подпись / дата</div></div>
+        <div class="ks2-sig-block"><strong>Авторский надзор</strong><div class="ks2-sig-line"></div><div class="ks2-sig-caption">_______________ / подпись / дата</div></div>
+      </div>
+    </div>
+    <div class="gap-sm mt-sm">
+      <button class="btn btn-success" onclick="window.print()">🖨️ Печать / PDF</button>
+      <button class="btn btn-outline" onclick="copyReport('#ks2-obj-print')">📋 Копировать</button>
+    </div>`;
+
+  const el=document.getElementById('obj-ks2');
+  if(el){el.innerHTML=html;el.scrollIntoView({behavior:'smooth'});}
+}
+
+async function importObjects(input){
+  const f=input.files[0];if(!f)return;input.value='';
+  const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  readFile(f,async text=>{
+    try{
+      const items=await parseJSON(key,text,'Извлеки список объектов. JSON: [{name,address,client,deadline,budget,progress,status}]. deadline=YYYY-MM-DD, budget=число, status="active"|"done"|"paused". Макс 50.');
+      items.forEach(it=>objects.push({id:'obj'+Date.now()+Math.random(),...it}));S.set('s_obj',objects);
+      alert(`✅ Импортировано ${items.length} объектов`);document.getElementById('panel-objects').innerHTML=panelObjects();
+    }catch(e){alert('Ошибка: '+e.message);}
+  });
+}
+
+// ══════ PANEL: МАТЕРИАЛЫ ══════
+function panelMats(){
+  const items=mats.map((m,i)=>{
+    const ch=m.prev?(m.price-m.prev)/m.prev*100:0;
+    const sc=ch>10?'badge-red':ch>5?'badge-yellow':'badge-green';
+    return`<div class="mc-item">
+      <div class="mc-title">${H(m.name)}</div>
+      <div class="mc-row"><span class="mc-lbl">Поставщик</span><span>${H(m.supplier||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Цена</span><span class="font-bold">${fmt(m.price||0)} ${H(m.unit||'')}</span></div>
+      ${ch?`<div class="mc-row"><span class="mc-lbl">Изменение</span><span><span class="badge ${sc}">${ch.toFixed(1)}%</span></span></div>`:''}
+      <div class="mc-row"><span class="mc-lbl">Остаток</span><span>${m.qty||0}</span></div>
+      <div class="mc-row"><span class="mc-lbl">ГОСТ/ТУ</span><span class="text-muted text-sm">${H(m.gost||'—')}</span></div>
+      <div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delMat(${i})">✕</button></div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет материалов</div>';
+  return`
+    <div class="sec-hd"><h2>🧱 Материалы</h2>
+      <div class="actions">
+        <label class="import-label">📂<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importMats(this)"></label>
+        <button class="btn btn-ghost" onclick="document.getElementById('mat-pp').classList.remove('hidden')">📄 Прайс</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('mm').classList.remove('hidden')">+ Вручную</button>
+        <button class="btn btn-accent" onclick="genZayavka()">📋 Заявка</button>
+      </div>
+    </div>
+    <div id="mc-mat" class="mobile-cards">${items}</div>
+    <div class="mt-md"><button class="btn btn-outline" onclick="analMats()">🤖 Анализ цен</button><div id="mat-res" class="mt-sm"></div></div>
+    <div class="modal-bg hidden" id="mm">
+      <div class="modal">
+        <div class="modal-hd"><h2>Добавить материал</h2><button class="close-btn" onclick="hideM('mm')">✕</button></div>
+        <div class="form-grid">
+          <div class="field field-full"><label>Материал *</label><input id="mm-n" placeholder="Кирпич рядовой М150"></div>
+          <div class="field"><label>Поставщик</label><input id="mm-s" placeholder="ООО СтройКомплект"></div>
+          <div class="field"><label>Цена</label><input id="mm-p" type="number" placeholder="12500"></div>
+          <div class="field"><label>Ед. изм.</label><input id="mm-u" placeholder="₽/тыс.шт"></div>
+          <div class="field"><label>Прежняя цена</label><input id="mm-pv" type="number" placeholder="11000"></div>
+          <div class="field"><label>Остаток</label><input id="mm-q" type="number" placeholder="5000"></div>
+          <div class="field field-full"><label>ГОСТ/ТУ/Сертификат</label><input id="mm-g" placeholder="ГОСТ 530-2012"></div>
+          <div class="field"><label>Дата</label><input id="mm-d" type="date" value="${now()}"></div>
+        </div>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveMat()">Сохранить</button></div>
+      </div>
+    </div>
+    <div class="modal-bg hidden" id="mat-pp">
+      <div class="modal">
+        <div class="modal-hd"><h2>📄 Парсинг прайса</h2><button class="close-btn" onclick="hideM('mat-pp')">✕</button></div>
+        <div class="field" style="margin-bottom:.6rem"><label>Вставьте текст прайса</label><textarea id="pp-txt" rows="6" placeholder="Кирпич М150 — 12 500 руб/тыс.шт&#10;Цемент М400 — 350 руб/мешок"></textarea></div>
+        <label class="import-label" style="margin-bottom:.65rem;width:100%">📂 Файл xlsx/csv<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="loadPriceFileMat(this)"></label>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="parsePrice()">🤖 Разобрать</button></div>
+        <div id="pp-res" class="mt-sm"></div>
+      </div>
+    </div>`;
+}
+function saveMat(){const n=document.getElementById('mm-n').value.trim();if(!n){alert('Укажите материал');return;}mats.push({name:n,supplier:document.getElementById('mm-s').value,price:+document.getElementById('mm-p').value||0,unit:document.getElementById('mm-u').value,prev:+document.getElementById('mm-pv').value||0,qty:+document.getElementById('mm-q').value||0,gost:document.getElementById('mm-g').value,date:document.getElementById('mm-d').value});S.set('s_mat',mats);hideM('mm');document.getElementById('panel-mats').innerHTML=panelMats();}
+function delMat(i){mats.splice(i,1);S.set('s_mat',mats);document.getElementById('panel-mats').innerHTML=panelMats();}
+function loadPriceFileMat(input){readFile(input.files[0],text=>{document.getElementById('pp-txt').value=text;});input.value='';}
+async function parsePrice(){const txt=document.getElementById('pp-txt').value.trim();if(!txt){alert('Нет данных');return;}const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('pp-res');el.innerHTML='<div class="thinking">Разбираю прайс...</div>';try{const items=await parseJSON(key,txt,'Разбери прайс стройматериалов. JSON: [{name,price,unit}]. price=число. Макс 100.');items.forEach(it=>mats.push({...it,date:now(),qty:0}));S.set('s_mat',mats);el.innerHTML=`<p style="color:#86efac">✅ Добавлено ${items.length} позиций</p>`;setTimeout(()=>{hideM('mat-pp');document.getElementById('panel-mats').innerHTML=panelMats();},1500);}catch(e){el.innerHTML=`<p style="color:#fca5a5">Ошибка: ${e.message}</p>`;}}
+async function importMats(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки стройматериалы. JSON: [{name,supplier,price,unit,qty,gost}]. price и qty числа. Макс 200.');items.forEach(it=>mats.push({...it,date:now()}));S.set('s_mat',mats);alert(`✅ ${items.length} позиций`);document.getElementById('panel-mats').innerHTML=panelMats();}catch(e){alert('Ошибка: '+e.message);}});}
+async function analMats(){const key=S.raw('st8_api_key');if(!key||!mats.length)return;const el=document.getElementById('mat-res');el.innerHTML='<div class="thinking">Анализирую...</div>';const items=mats.slice(0,10).map(m=>`${m.name}: ${m.price} ${m.unit}${m.prev?` (было ${m.prev})`:''}${m.qty?`, остаток ${m.qty}`:''}`).join('; ');try{const r=await aiCall(`Анализируй цены стройматериалов. 2-3 совета по оптимизации. ${items}`);el.innerHTML=`<div class="card"><div class="master-tip">${H(r)}</div></div>`;}catch(e){el.innerHTML='';}}
+async function genZayavka(){if(!mats.length){alert('Добавьте материалы');return;}const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('mat-res');el.innerHTML='<div class="thinking">Формирую заявку...</div>';const items=mats.slice(0,12).map(m=>`${m.name} (${m.price} ${m.unit})`).join('; ');try{const r=await aiCall(`Составь заявку поставщику от "${cfg.company}" на ${new Date().toLocaleDateString('ru')}. Материалы: ${items}. Объём на 2 недели. Без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><div class="gap-sm"><button class="btn btn-outline" onclick="copyReport('#mat-res .report-area')">📋 Копировать</button><button class="btn btn-success" onclick="window.print()">🖨️</button></div>`;}catch(e){el.innerHTML='';}}
+
+// ══════ PANEL: БРИГАДЫ ══════
+function panelBrig(){
+  const tw=brig.reduce((s,b)=>s+(b.size||0),0);
+  const items=brig.map((b,i)=>{
+    const sc={active:'badge-green',busy:'badge-yellow',free:'badge-blue',inactive:'badge-red'}[b.status]||'badge-yellow';
+    const sl={active:'На объекте',busy:'Занята',free:'Свободна',inactive:'Не активна'}[b.status]||b.status;
+    return`<div class="mc-item">
+      <div class="mc-title">${H(b.name)} <span class="badge ${sc}">${sl}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Специализация</span><span>${H(b.spec||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Бригадир</span><span>${H(b.foreman||'—')}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Телефон</span><span>${b.phone?`<a href="tel:${b.phone}" style="color:var(--accent)">${H(b.phone)}</a>`:'—'}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Рабочих</span><span class="font-bold">${b.size||0} чел</span></div>
+      <div class="mc-row"><span class="mc-lbl">Ставка</span><span>${fmt(b.rate||0)} ₽/день</span></div>
+      <div class="mc-actions">
+        <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="changeBrigStatus(${i})">🔄</button>
+        <button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delBrig(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет бригад</div>';
+  return`
+    <div class="sec-hd"><h2>👷 Бригады</h2>
+      <div class="actions">
+        <label class="import-label">📂<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importBrig(this)"></label>
+        <button class="btn btn-accent" onclick="document.getElementById('bm').classList.remove('hidden')">+ Бригада</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${brig.filter(b=>b.status==='active').length}</div><div class="kpi-lbl">На объектах</div></div>
+      <div class="kpi"><div class="kpi-val">${brig.filter(b=>b.status==='free').length}</div><div class="kpi-lbl">Свободных</div></div>
+      <div class="kpi"><div class="kpi-val">${tw}</div><div class="kpi-lbl">Рабочих всего</div></div>
+      <div class="kpi"><div class="kpi-val">${brig.length?fmt(Math.round(brig.reduce((s,b)=>s+(b.rate||0),0)/brig.length)):0}</div><div class="kpi-lbl">Ср.ставка ₽/день</div></div>
+    </div>
+    <div id="mc-brig" class="mobile-cards">${items}</div>
+    <div class="modal-bg hidden" id="bm">
+      <div class="modal">
+        <div class="modal-hd"><h2>Новая бригада</h2><button class="close-btn" onclick="hideM('bm')">✕</button></div>
+        <div class="form-grid">
+          <div class="field field-full"><label>Название *</label><input id="bm-n" placeholder="Бригада Иванова"></div>
+          <div class="field field-full"><label>Специализация</label><input id="bm-sp" placeholder="Каменщики, монолит, отделка..."></div>
+          <div class="field"><label>Бригадир</label><input id="bm-f" placeholder="Иван Петров"></div>
+          <div class="field"><label>Телефон</label><input id="bm-ph" type="tel" placeholder="+7 900 000 00 00"></div>
+          <div class="field"><label>Кол-во рабочих</label><input id="bm-sz" type="number" placeholder="8"></div>
+          <div class="field"><label>Ставка ₽/день (бригада)</label><input id="bm-r" type="number" placeholder="25000"></div>
+          <div class="field field-full"><label>Статус</label><select id="bm-st"><option value="free">Свободна</option><option value="active">На объекте</option><option value="busy">Занята</option><option value="inactive">Не активна</option></select></div>
+        </div>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveBrig()">Сохранить</button></div>
+      </div>
+    </div>`;
+}
+function saveBrig(){const n=document.getElementById('bm-n').value.trim();if(!n){alert('Укажите название');return;}brig.push({name:n,spec:document.getElementById('bm-sp').value,foreman:document.getElementById('bm-f').value,phone:document.getElementById('bm-ph').value,size:+document.getElementById('bm-sz').value||0,rate:+document.getElementById('bm-r').value||0,status:document.getElementById('bm-st').value});S.set('s_brig',brig);hideM('bm');document.getElementById('panel-brig').innerHTML=panelBrig();}
+function delBrig(i){if(!confirm('Удалить?'))return;brig.splice(i,1);S.set('s_brig',brig);document.getElementById('panel-brig').innerHTML=panelBrig();}
+function changeBrigStatus(i){const s=['free','active','busy','inactive'];brig[i].status=s[(s.indexOf(brig[i].status)+1)%s.length];S.set('s_brig',brig);document.getElementById('panel-brig').innerHTML=panelBrig();}
+async function importBrig(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки список бригад. JSON: [{name,spec,foreman,phone,size,rate}]. Макс 50.');items.forEach(it=>brig.push({...it,status:'free'}));S.set('s_brig',brig);alert(`✅ ${items.length} бригад`);document.getElementById('panel-brig').innerHTML=panelBrig();}catch(e){alert('Ошибка: '+e.message);}});}
+
+// ══════ PANEL: КАЛЬКУЛЯТОР ══════
+function panelCalc(){
+  return`
+    <div class="sec-hd"><h2>🧮 Калькулятор материалов</h2></div>
+    <div class="calc-grid">
+      <div class="calc-card"><h4>🏗️ Бетон / стяжка</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Длина (м)</label><input id="c-bl" type="number" placeholder="10" oninput="calcConcrete()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Ширина (м)</label><input id="c-bw" type="number" placeholder="5" oninput="calcConcrete()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Толщина (м)</label><input id="c-bh" type="number" step="0.01" placeholder="0.2" oninput="calcConcrete()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Марка</label><select id="c-bm" onchange="calcConcrete()"><option value="200">М200 (стяжка)</option><option value="300">М300 (фундамент)</option><option value="400">М400 (несущие)</option></select></div>
+        <div class="calc-result" id="r-concrete">Введите размеры</div>
+      </div>
+      <div class="calc-card"><h4>🧱 Кирпичная кладка</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Площадь стены (м²)</label><input id="c-kl" type="number" placeholder="30" oninput="calcBrick()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Толщина</label><select id="c-kt" onchange="calcBrick()"><option value="0.5">0.5 кирпича (120мм)</option><option value="1">1 кирпич (250мм)</option><option value="1.5">1.5 кирпича (380мм)</option><option value="2">2 кирпича (510мм)</option></select></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Запас на бой (%)</label><input id="c-kbr" type="number" placeholder="5" value="5" oninput="calcBrick()"></div>
+        <div class="calc-result" id="r-brick">Введите площадь</div>
+      </div>
+      <div class="calc-card"><h4>🪣 Штукатурка</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Площадь (м²)</label><input id="c-pl" type="number" placeholder="60" oninput="calcPlaster()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Толщина слоя (мм)</label><input id="c-pt" type="number" placeholder="20" value="20" oninput="calcPlaster()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Расход смеси (кг/м²·10мм)</label><input id="c-pkg" type="number" step="0.1" placeholder="8.5" value="8.5" oninput="calcPlaster()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Вес мешка (кг)</label><input id="c-pbag" type="number" placeholder="30" value="30" oninput="calcPlaster()"></div>
+        <div class="calc-result" id="r-plaster">Введите площадь</div>
+      </div>
+      <div class="calc-card"><h4>🔲 Плитка / ламинат</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Площадь (м²)</label><input id="c-tl" type="number" placeholder="25" oninput="calcTile()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Плитка мм × мм</label>
+          <div style="display:flex;gap:.3rem"><input id="c-tw" type="number" placeholder="600" style="flex:1" oninput="calcTile()"><span style="align-self:center;color:var(--text-muted)">×</span><input id="c-th" type="number" placeholder="600" style="flex:1" oninput="calcTile()"></div>
+        </div>
+        <div class="field" style="margin-bottom:.5rem"><label>Запас на бой (%)</label><input id="c-tbr" type="number" placeholder="10" value="10" oninput="calcTile()"></div>
+        <div class="calc-result" id="r-tile">Введите площадь</div>
+      </div>
+      <div class="calc-card"><h4>🎨 Краска / грунтовка</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Площадь (м²)</label><input id="c-pal" type="number" placeholder="80" oninput="calcPaint()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Кол-во слоёв</label><input id="c-play" type="number" placeholder="2" value="2" oninput="calcPaint()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Расход (м²/л)</label><input id="c-prate" type="number" step="0.1" placeholder="12" value="12" oninput="calcPaint()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Тара (л)</label><input id="c-pvol" type="number" placeholder="10" value="10" oninput="calcPaint()"></div>
+        <div class="calc-result" id="r-paint">Введите площадь</div>
+      </div>
+      <div class="calc-card"><h4>💰 Зарплата бригады</h4>
+        <div class="field" style="margin-bottom:.5rem"><label>Кол-во рабочих</label><input id="c-ww" type="number" placeholder="8" oninput="calcWage()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Ставка ₽/день на человека</label><input id="c-wd" type="number" placeholder="3000" oninput="calcWage()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Рабочих дней</label><input id="c-wdys" type="number" placeholder="20" oninput="calcWage()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>Надбавка (%)</label><input id="c-wbonus" type="number" placeholder="0" value="0" oninput="calcWage()"></div>
+        <div class="calc-result" id="r-wage">Введите данные</div>
+      </div>
+      <div class="calc-card" style="grid-column:1/-1"><h4>🤖 AI-расчёт любого объёма</h4>
+        <div class="field" style="margin-bottom:.65rem"><label>Опишите задачу</label><textarea id="c-ai" rows="3" placeholder="Нужно залить фундамент-плиту 12×10м, толщина 300мм, армирование ø12мм с шагом 200мм. Рассчитай бетон, арматуру и опалубку."></textarea></div>
+        <button class="btn btn-accent" onclick="aiCalc()">🤖 Рассчитать</button>
+        <div id="r-ai" class="mt-sm"></div>
+      </div>
+    </div>`;
+}
+function calcConcrete(){const l=+document.getElementById('c-bl').value||0,w=+document.getElementById('c-bw').value||0,h=+document.getElementById('c-bh').value||0,m=document.getElementById('c-bm').value,el=document.getElementById('r-concrete');if(!l||!w||!h){el.textContent='Введите размеры';return;}const vol=(l*w*h).toFixed(3),cement={200:240,300:310,400:370}[m]||310,bags=Math.ceil(+vol*cement/50),sand=Math.round(+vol*0.62*1000)/1000,gravel=Math.round(+vol*0.85*1000)/1000;el.innerHTML=`Объём: <strong>${vol} м³</strong><br>Цемент М${m}: ~${bags} мешков (${Math.round(+vol*cement)} кг)<br>Песок: ~${sand} м³<br>Щебень: ~${gravel} м³`;}
+function calcBrick(){const area=+document.getElementById('c-kl').value||0,thick=+document.getElementById('c-kt').value||0.5,base=51,br=+document.getElementById('c-kbr').value||5,el=document.getElementById('r-brick');if(!area){el.textContent='Введите площадь';return;}const perM2=Math.round(base*thick*2),qty=Math.ceil(area*perM2*(1+br/100)),mortar=(area*thick*0.25*0.3).toFixed(2);el.innerHTML=`Кирпичей: <strong>${fmt(qty)} шт</strong><br>Раствор: ~${mortar} м³<br>Расход: ${perM2} шт/м²`;}
+function calcPlaster(){const area=+document.getElementById('c-pl').value||0,thick=+document.getElementById('c-pt').value||20,rate=+document.getElementById('c-pkg').value||8.5,bag=+document.getElementById('c-pbag').value||30,el=document.getElementById('r-plaster');if(!area){el.textContent='Введите площадь';return;}const kgTotal=Math.ceil(area*(rate/10)*thick),bags=Math.ceil(kgTotal/bag);el.innerHTML=`Смеси: <strong>${fmt(kgTotal)} кг</strong><br>Мешков ${bag}кг: ~<strong>${bags} шт</strong>`;}
+function calcTile(){const area=+document.getElementById('c-tl').value||0,w=+document.getElementById('c-tw').value||600,h=+document.getElementById('c-th').value||600,br=+document.getElementById('c-tbr').value||10,el=document.getElementById('r-tile');if(!area||!w||!h){el.textContent='Введите данные';return;}const perM2=1/((w/1000)*(h/1000)),qty=Math.ceil(area*perM2*(1+br/100));el.innerHTML=`Плиток: <strong>${fmt(qty)} шт</strong><br>Расход: ${perM2.toFixed(1)} шт/м²<br>Запас ${br}%: ${Math.ceil(area*perM2*br/100)} шт`;}
+function calcPaint(){const area=+document.getElementById('c-pal').value||0,layers=+document.getElementById('c-play').value||2,rate=+document.getElementById('c-prate').value||12,vol=+document.getElementById('c-pvol').value||10,el=document.getElementById('r-paint');if(!area){el.textContent='Введите площадь';return;}const liters=Math.ceil(area*layers/rate),cans=Math.ceil(liters/vol);el.innerHTML=`Краски: <strong>${liters} л</strong><br>Банок по ${vol}л: <strong>${cans} шт</strong>`;}
+function calcWage(){const workers=+document.getElementById('c-ww').value||0,daily=+document.getElementById('c-wd').value||0,days=+document.getElementById('c-wdys').value||0,bonus=+document.getElementById('c-wbonus').value||0,el=document.getElementById('r-wage');if(!workers||!daily||!days){el.textContent='Введите данные';return;}const base=workers*daily*days,total=Math.round(base*(1+bonus/100)),ndfl=Math.round(total*0.13);el.innerHTML=`ФОТ (на руки): <strong>${fmt(total)} ₽</strong><br>НДФЛ 13%: ${fmt(ndfl)} ₽<br>${workers} чел × ${daily} ₽/день × ${days} дней`;}
+async function aiCalc(){const text=document.getElementById('c-ai').value.trim();if(!text){alert('Опишите задачу');return;}const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('r-ai');el.innerHTML='<div class="thinking">МАСТЕР считает...</div>';try{const r=await aiCall(`Рассчитай объёмы и количество материалов. Дай конкретные цифры с формулами. Ссылайся на нормы (ЕНиР, ГЭСН, СНиП). Задача: ${text}`);el.innerHTML=`<div class="card"><div class="master-tip" style="font-style:normal">${H(r)}</div></div><div class="gap-sm mt-sm"><button class="btn btn-outline" onclick="copyReport('#r-ai .master-tip')">📋 Копировать</button></div>`;}catch(e){el.innerHTML=`<p style="color:#fca5a5">Ошибка: ${e.message}</p>`;}}
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 2: КС-6А — ЖУРНАЛ УЧЁТА ВЫПОЛНЕННЫХ РАБОТ
+// Основание для КС-2. Без него акт технически незаконен.
+// ══════════════════════════════════════════════════════
+function panelJournals(){
+  return`
+    <div class="sec-hd"><h2>📓 Журналы</h2></div>
+    <div class="source-tabs">
+      <button class="ct-btn${jtab==='ks6a'?' active':''}" onclick="switchJ('ks6a')">📊 КС-6а</button>
+      <button class="ct-btn${jtab==='work'?' active':''}" onclick="switchJ('work')">📝 ОВР</button>
+      <button class="ct-btn${jtab==='shift'?' active':''}" onclick="switchJ('shift')">🧑‍🔧 Смены</button>
+      <button class="ct-btn${jtab==='def'?' active':''}" onclick="switchJ('def')">⚠️ Дефекты</button>
+      <button class="ct-btn${jtab==='tb'?' active':''}" onclick="switchJ('tb')">🦺 ТБ</button>
+      <button class="ct-btn${jtab==='akt'?' active':''}" onclick="switchJ('akt')">📄 Скрытые работы</button>
+      <button class="ct-btn${jtab==='input'?' active':''}" onclick="switchJ('input')">📥 Входной контроль</button>
+    </div>
+    <div id="j-content">${renderJ()}</div>`;
+}
+function switchJ(t){jtab=t;const el=document.getElementById('j-content');if(el)el.innerHTML=renderJ();}
+function renderJ(){
+  if(jtab==='ks6a') return renderKS6A();
+  if(jtab==='work') return renderJWork();
+  if(jtab==='shift') return renderJShift();
+  if(jtab==='def') return renderJDef();
+  if(jtab==='tb') return renderJTB();
+  if(jtab==='akt') return renderJAkt();
+  return renderJInput();
+}
+
+function renderKS6A(){
+  const total=ks6a.reduce((s,r)=>s+(+r.sum||0),0);
+  const items=ks6a.slice(-20).reverse().map((r,i)=>{
+    const narTitle=naryady.find(n=>n.id===r.narId)?.title||r.narTitle||'—';
+    const objName=r.objId?objects.find(o=>o.id===r.objId)?.name||'—':'—';
+    return`<div class="mc-item">
+      <div class="mc-title">${r.date||'—'} · <span style="color:var(--accent)">${H(narTitle.slice(0,40))}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Объект</span><span>${H(objName)}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Описание работ</span><span class="text-muted text-sm">${H((r.workDesc||'—').slice(0,50))}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Ед.изм / кол-во</span><span>${H(r.unit||'—')} · ${r.qty||0}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Нарастающим итогом</span><span class="font-bold">${r.qtyTotal||r.qty||0}</span></div>
+      <div class="mc-row"><span class="mc-lbl">Стоимость</span><span class="text-accent font-bold">${fmt(r.sum||0)} ₽</span></div>
+      <div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delKS6A(${ks6a.length-1-i})">✕</button></div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет записей. КС-6а — ежедневный учёт выполненных работ, основание для КС-2.</div>';
+
+  return`
+    <div style="background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.2);border-radius:8px;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.78rem;">
+      <strong>КС-6а</strong> — Журнал учёта выполненных работ (Форма утв. Постановлением Госкомстата № 100). Заполняется ежедневно и является <strong>основанием для КС-2</strong>.
+    </div>
+    <div class="gap-sm" style="margin-bottom:.75rem">
+      <label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importKS6A(this)"></label>
+      <button class="btn btn-accent" onclick="document.getElementById('ks6-m').classList.remove('hidden')">+ Запись КС-6а</button>
+      ${total?`<span style="font-size:.78rem;color:var(--accent);align-self:center">Итого: <strong>${fmt(total)} ₽</strong></span>`:''}
+    </div>
+    <div class="mobile-cards">${items}</div>
+    <div id="ks6-res" class="mt-sm"></div>
+
+    <div class="modal-bg hidden" id="ks6-m">
+      <div class="modal">
+        <div class="modal-hd"><h2>Запись КС-6а</h2><button class="close-btn" onclick="hideM('ks6-m')">✕</button></div>
+        <div class="form-grid">
+          <div class="field"><label>Дата *</label><input id="ks6-d" type="date" value="${now()}"></div>
+          <div class="field"><label>Объект</label>
+            <select id="ks6-oid">
+              <option value="">— объект —</option>
+              ${objects.map(o=>`<option value="${o.id}">${H(o.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field field-full"><label>Наряд (вид работ)</label>
+            <select id="ks6-nid" onchange="ks6FillFromNar(this.value)">
+              <option value="">— выберите наряд —</option>
+              ${naryady.map(n=>`<option value="${n.id}">${H(n.title.slice(0,50))}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field field-full"><label>Описание работ (что сделано за день)</label><textarea id="ks6-wd" rows="2" placeholder="Кладка кирпича, ряды 5-12, секция А, этаж 2..."></textarea></div>
+          <div class="field"><label>Ед. измерения</label><input id="ks6-u" placeholder="м², м³, п.м."></div>
+          <div class="field"><label>Выполнено за день</label><input id="ks6-q" type="number" placeholder="25" oninput="calcKS6Total()"></div>
+          <div class="field"><label>Нарастающим итогом</label><input id="ks6-qt" type="number" placeholder="120"></div>
+          <div class="field"><label>Цена ед. ₽</label><input id="ks6-p" type="number" placeholder="850" oninput="calcKS6Sum()"></div>
+          <div class="field"><label>Стоимость за день ₽</label><input id="ks6-s" type="number" placeholder="21250"></div>
+        </div>
+        <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveKS6A()">Сохранить</button></div>
+      </div>
+    </div>`;
+}
+
+function ks6FillFromNar(narId){
+  const n=naryady.find(n=>n.id===narId);if(!n)return;
+  if(n.unit) document.getElementById('ks6-u').value=n.unit.split(',')[0];
+  if(n.price) document.getElementById('ks6-p').value=n.price;
+  if(n.objectId){const sel=document.getElementById('ks6-oid');if(sel)sel.value=n.objectId;}
+}
+
+function calcKS6Total(){
+  const q=+document.getElementById('ks6-q').value||0;
+  const prev=ks6a.filter(r=>r.narId===document.getElementById('ks6-nid').value).reduce((s,r)=>s+(+r.qty||0),0);
+  document.getElementById('ks6-qt').value=prev+q;
+  calcKS6Sum();
+}
+
+function calcKS6Sum(){
+  const q=+document.getElementById('ks6-q').value||0;
+  const p=+document.getElementById('ks6-p').value||0;
+  if(q&&p) document.getElementById('ks6-s').value=Math.round(q*p);
+}
+
+function saveKS6A(){
+  const d=document.getElementById('ks6-d').value;if(!d){alert('Укажите дату');return;}
+  const narId=document.getElementById('ks6-nid').value;
+  const narTitle=naryady.find(n=>n.id===narId)?.title||'';
+  ks6a.push({
+    date:d,
+    objId:document.getElementById('ks6-oid').value,
+    narId,narTitle,
+    workDesc:document.getElementById('ks6-wd').value,
+    unit:document.getElementById('ks6-u').value,
+    qty:+document.getElementById('ks6-q').value||0,
+    qtyTotal:+document.getElementById('ks6-qt').value||0,
+    price:+document.getElementById('ks6-p').value||0,
+    sum:+document.getElementById('ks6-s').value||0,
+  });
+  S.set('s_ks6a',ks6a);hideM('ks6-m');document.getElementById('j-content').innerHTML=renderJ();
+}
+
+function delKS6A(i){ks6a.splice(i,1);S.set('s_ks6a',ks6a);document.getElementById('j-content').innerHTML=renderJ();}
+
+async function importKS6A(input){
+  const f=input.files[0];if(!f)return;input.value='';
+  const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  readFile(f,async text=>{
+    try{
+      const items=await parseJSON(key,text,'Извлеки записи КС-6а (журнал учёта выполненных работ). JSON: [{date,narTitle,workDesc,unit,qty,qtyTotal,price,sum}]. date=YYYY-MM-DD, qty и sum=числа. Макс 200.');
+      items.forEach(it=>ks6a.push({...it,objId:'',narId:''}));
+      S.set('s_ks6a',ks6a);alert(`✅ Импортировано ${items.length} записей`);
+      document.getElementById('j-content').innerHTML=renderJ();
+    }catch(e){alert('Ошибка: '+e.message);}
+  });
+}
+
+// ОВР
+function renderJWork(){
+  const items=jWork.slice(-15).reverse().map((b,i)=>{const sc=b.result==='pass'?'badge-green':'badge-red';return`<div class="mc-item"><div class="mc-title">${H(b.work)} <span class="badge ${sc}">${b.result==='pass'?'Принято':'Замечание'}</span></div><div class="mc-row"><span class="mc-lbl">Дата</span><span>${b.date||'—'}</span></div><div class="mc-row"><span class="mc-lbl">Объект</span><span>${H(b.loc||'—')}</span></div><div class="mc-row"><span class="mc-lbl">Примечание</span><span class="text-muted">${H(b.note||'—')}</span></div><div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delJW(${jWork.length-1-i})">✕</button></div></div>`;}).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет записей</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importJW(this)"></label><button class="btn btn-accent" onclick="document.getElementById('jw-m').classList.remove('hidden')">+ Запись ОВР</button><button class="btn btn-ghost" onclick="genChecklist()">📋 Чек-лист</button></div>
+    <div class="mobile-cards">${items}</div><div id="jw-res" class="mt-sm"></div>
+    <div class="modal-bg hidden" id="jw-m"><div class="modal"><div class="modal-hd"><h2>Запись ОВР</h2><button class="close-btn" onclick="hideM('jw-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="jw-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Результат</label><select id="jw-r"><option value="pass">Принято</option><option value="fail">Замечание</option></select></div>
+        <div class="field field-full"><label>Вид работ *</label><input id="jw-w" placeholder="Кладка кирпича, ряды 5-12"></div>
+        <div class="field field-full"><label>Объект / участок</label><input id="jw-l" placeholder="Секция А, этаж 3, ось 3-4"></div>
+        <div class="field field-full"><label>Примечание</label><input id="jw-n" placeholder="Бригада, температура, условия..."></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJW()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveJW(){const w=document.getElementById('jw-w').value.trim();if(!w){alert('Укажите вид работ');return;}jWork.push({date:document.getElementById('jw-d').value,work:w,loc:document.getElementById('jw-l').value,result:document.getElementById('jw-r').value,note:document.getElementById('jw-n').value});S.set('s_jw',jWork);hideM('jw-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delJW(i){jWork.splice(i,1);S.set('s_jw',jWork);document.getElementById('j-content').innerHTML=renderJ();}
+async function importJW(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки записи журнала работ. JSON: [{date,work,loc,result,note}]. date=YYYY-MM-DD, result="pass"|"fail". Макс 100.');items.forEach(it=>jWork.push({...it}));S.set('s_jw',jWork);alert(`✅ ${items.length} записей`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+async function genChecklist(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('jw-res');el.innerHTML='<div class="thinking">Готовлю чек-лист...</div>';const works=naryady.filter(n=>n.status==='active').slice(0,5).map(n=>n.title).join(', ')||'общестроительные работы';try{const r=await aiCall(`Составь чек-лист контроля качества для "${cfg.company}" на ${new Date().toLocaleDateString('ru')}. Работы: ${works}. СНиП/ГОСТ. Построчно, без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><button class="btn btn-outline" onclick="copyReport('#jw-res .report-area')">📋 Копировать</button>`;}catch(e){el.innerHTML='';}}
+
+// Смены
+function renderJShift(){
+  const items=jShift.slice(-10).reverse().map((s,i)=>`<div class="mc-item"><div class="mc-title">${s.date||''} · ${H(s.brigade)}</div><div class="mc-row"><span class="mc-lbl">Часов</span><span>${s.hours||0} ч</span></div><div class="mc-row"><span class="mc-lbl">Рабочих</span><span>${s.workers||0} чел</span></div><div class="mc-row"><span class="mc-lbl">Итоги</span><span class="text-muted text-sm">${H((s.notes||'—').slice(0,60))}</span></div><div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delJS(${jShift.length-1-i})">✕</button></div></div>`).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет записей</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importJS(this)"></label><button class="btn btn-accent" onclick="document.getElementById('js-m').classList.remove('hidden')">+ Закрыть смену</button></div>
+    <div class="mobile-cards">${items}</div>
+    <div class="modal-bg hidden" id="js-m"><div class="modal"><div class="modal-hd"><h2>Закрытие смены</h2><button class="close-btn" onclick="hideM('js-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="js-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Часов отработано</label><input id="js-h" type="number" placeholder="8" value="8"></div>
+        <div class="field field-full"><label>Бригада *</label><input id="js-b" placeholder="Бригада Иванова"></div>
+        <div class="field"><label>Рабочих вышло</label><input id="js-w" type="number" placeholder="10"></div>
+        <div class="field field-full"><label>Выполнено / инциденты</label><textarea id="js-n" rows="3" placeholder="Что сделано за смену..."></textarea></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJS()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveJS(){const b=document.getElementById('js-b').value.trim();if(!b){alert('Укажите бригаду');return;}jShift.push({date:document.getElementById('js-d').value,brigade:b,hours:+document.getElementById('js-h').value||8,workers:+document.getElementById('js-w').value||0,notes:document.getElementById('js-n').value});S.set('s_js',jShift);hideM('js-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delJS(i){jShift.splice(i,1);S.set('s_js',jShift);document.getElementById('j-content').innerHTML=renderJ();}
+async function importJS(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки записи смен. JSON: [{date,brigade,hours,workers,notes}]. Макс 50.');items.forEach(it=>jShift.push({...it}));S.set('s_js',jShift);alert(`✅ ${items.length} смен`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+
+// Дефекты
+function renderJDef(){
+  const open=jDef.filter(d=>d.status==='open').length;
+  const items=jDef.slice(-15).reverse().map((d,i)=>{const sc={open:'badge-red',fixing:'badge-yellow',closed:'badge-green'}[d.status]||'badge-yellow';const sl={open:'Открыт',fixing:'Устраняется',closed:'Устранён'}[d.status]||d.status;return`<div class="mc-item"><div class="mc-title">${H(d.title)} <span class="badge ${sc}">${sl}</span></div><div class="mc-row"><span class="mc-lbl">Дата</span><span>${d.date||'—'}</span></div><div class="mc-row"><span class="mc-lbl">Место</span><span>${H(d.loc||'—')}</span></div><div class="mc-row"><span class="mc-lbl">Примечание</span><span class="text-muted text-sm">${H(d.note||'—')}</span></div><div class="mc-actions"><button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="cycleDefStatus(${jDef.length-1-i})">🔄</button><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delJD(${jDef.length-1-i})">✕</button></div></div>`;}).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Дефектов нет</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importJD(this)"></label><button class="btn btn-accent" onclick="document.getElementById('jd-m').classList.remove('hidden')">+ Дефект</button><button class="btn btn-ghost" onclick="genDefAct()">📋 Дефектный акт</button>${open?`<span class="badge badge-red">${open} открытых</span>`:''}</div>
+    <div class="mobile-cards">${items}</div><div id="jd-res" class="mt-sm"></div>
+    <div class="modal-bg hidden" id="jd-m"><div class="modal"><div class="modal-hd"><h2>Дефект</h2><button class="close-btn" onclick="hideM('jd-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="jd-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Статус</label><select id="jd-s"><option value="open">Открыт</option><option value="fixing">Устраняется</option><option value="closed">Устранён</option></select></div>
+        <div class="field field-full"><label>Описание *</label><input id="jd-t" placeholder="Трещина в кладке, отклонение стены > 5мм..."></div>
+        <div class="field field-full"><label>Место</label><input id="jd-l" placeholder="Секция Б, ось 3-4, этаж 2"></div>
+        <div class="field field-full"><label>Примечание</label><input id="jd-n" placeholder="Причина, кто обнаружил..."></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJD()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveJD(){const t=document.getElementById('jd-t').value.trim();if(!t){alert('Опишите дефект');return;}jDef.push({date:document.getElementById('jd-d').value,title:t,loc:document.getElementById('jd-l').value,status:document.getElementById('jd-s').value,note:document.getElementById('jd-n').value});S.set('s_jd',jDef);hideM('jd-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delJD(i){jDef.splice(i,1);S.set('s_jd',jDef);document.getElementById('j-content').innerHTML=renderJ();}
+function cycleDefStatus(i){const s=['open','fixing','closed'];jDef[i].status=s[(s.indexOf(jDef[i].status)+1)%s.length];S.set('s_jd',jDef);document.getElementById('j-content').innerHTML=renderJ();}
+async function importJD(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки дефекты. JSON: [{date,title,loc,status,note}]. date=YYYY-MM-DD, status="open"|"fixing"|"closed". Макс 50.');items.forEach(it=>jDef.push({...it}));S.set('s_jd',jDef);alert(`✅ ${items.length} дефектов`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+async function genDefAct(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('jd-res');el.innerHTML='<div class="thinking">Составляю акт...</div>';const items=jDef.filter(d=>d.status!=='closed').map(d=>`${d.title} (${d.loc||'место не указано'})`).join('; ')||'нет';try{const r=await aiCall(`Составь дефектный акт для "${cfg.company}" ИНН ${cfg.inn||'—'} от ${new Date().toLocaleDateString('ru')}. Нарушения: ${items}. Включи: шапку с реквизитами, перечень с ссылками на СНиП, предписание по устранению со сроками. Без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><div class="gap-sm"><button class="btn btn-outline" onclick="copyReport('#jd-res .report-area')">📋 Копировать</button><button class="btn btn-success" onclick="window.print()">🖨️</button></div>`;}catch(e){el.innerHTML='';}}
+
+// ТБ
+function renderJTB(){
+  const items=jTB.slice(-15).reverse().map((b,i)=>{const tl={vvod:'Вводный',pervich:'Первичный',povt:'Повторный',vneplanov:'Внеплановый',tselevoy:'Целевой'}[b.type]||b.type;return`<div class="mc-item"><div class="mc-title">${H(b.worker)} <span class="badge badge-blue">${tl}</span></div><div class="mc-row"><span class="mc-lbl">Дата</span><span>${b.date||'—'}</span></div><div class="mc-row"><span class="mc-lbl">Инструктор</span><span>${H(b.instructor||'—')}</span></div><div class="mc-row"><span class="mc-lbl">Работы</span><span class="text-muted">${H(b.work||'—')}</span></div><div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delJTB(${jTB.length-1-i})">✕</button></div></div>`;}).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет записей</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importTB(this)"></label><button class="btn btn-accent" onclick="document.getElementById('jtb-m').classList.remove('hidden')">+ Инструктаж</button><button class="btn btn-ghost" onclick="genTBDoc()">📋 Инструкция ТБ</button></div>
+    <div class="mobile-cards">${items}</div><div id="tb-res" class="mt-sm"></div>
+    <div class="modal-bg hidden" id="jtb-m"><div class="modal"><div class="modal-hd"><h2>Журнал ТБ</h2><button class="close-btn" onclick="hideM('jtb-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="tb-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Вид инструктажа</label><select id="tb-t"><option value="vvod">Вводный</option><option value="pervich">Первичный на р.м.</option><option value="povt">Повторный</option><option value="vneplanov">Внеплановый</option><option value="tselevoy">Целевой</option></select></div>
+        <div class="field field-full"><label>ФИО рабочего *</label><input id="tb-w" placeholder="Иванов Иван Иванович"></div>
+        <div class="field field-full"><label>Кто проводил</label><input id="tb-i" placeholder="${cfg.manager}"></div>
+        <div class="field field-full"><label>Вид работ / объект</label><input id="tb-wk" placeholder="Монолитные работы, высота > 3м"></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveTB()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveTB(){const w=document.getElementById('tb-w').value.trim();if(!w){alert('Укажите ФИО');return;}jTB.push({date:document.getElementById('tb-d').value,type:document.getElementById('tb-t').value,worker:w,instructor:document.getElementById('tb-i').value,work:document.getElementById('tb-wk').value});S.set('s_jtb',jTB);hideM('jtb-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delJTB(i){jTB.splice(i,1);S.set('s_jtb',jTB);document.getElementById('j-content').innerHTML=renderJ();}
+async function importTB(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Журнал ТБ. JSON: [{date,type,worker,instructor,work}]. type="vvod"|"pervich"|"povt"|"vneplanov"|"tselevoy". Макс 200.');items.forEach(it=>jTB.push({...it}));S.set('s_jtb',jTB);alert(`✅ ${items.length} записей`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+async function genTBDoc(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('tb-res');el.innerHTML='<div class="thinking">Составляю инструкцию...</div>';const works=naryady.filter(n=>n.status==='active').slice(0,3).map(n=>n.title).join(', ')||cfg.spec;try{const r=await aiCall(`Составь инструкцию по ТБ для "${cfg.company}" для работ: ${works}. Включи: опасности, СИЗ, требования до/во время/после работ. ГОСТ/СНиП ТБ. Без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><div class="gap-sm"><button class="btn btn-outline" onclick="copyReport('#tb-res .report-area')">📋 Копировать</button><button class="btn btn-success" onclick="window.print()">🖨️</button></div>`;}catch(e){el.innerHTML='';}}
+
+// Акты скрытых работ
+function renderJAkt(){
+  const items=jAkt.slice(-15).reverse().map((a,i)=>{const sc={draft:'badge-yellow',signed:'badge-green',rejected:'badge-red'}[a.status]||'badge-yellow';const sl={draft:'Составлен',signed:'Подписан',rejected:'Отклонён'}[a.status]||a.status;return`<div class="mc-item"><div class="mc-title">${H(a.work)} <span class="badge ${sc}">${sl}</span></div><div class="mc-row"><span class="mc-lbl">Дата</span><span>${a.date||'—'}</span></div><div class="mc-row"><span class="mc-lbl">Объект</span><span>${H(a.loc||'—')}</span></div><div class="mc-row"><span class="mc-lbl">СНиП/ГОСТ</span><span class="text-muted text-sm">${H(a.snip||'—')}</span></div><div class="mc-actions"><button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="genAktSR(${jAkt.length-1-i})">📋 Акт</button><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delAkt(${jAkt.length-1-i})">✕</button></div></div>`;}).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет актов</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importAkt(this)"></label><button class="btn btn-accent" onclick="document.getElementById('jak-m').classList.remove('hidden')">+ Акт</button></div>
+    <div class="mobile-cards">${items}</div><div id="akt-res" class="mt-sm"></div>
+    <div class="modal-bg hidden" id="jak-m"><div class="modal"><div class="modal-hd"><h2>Акт скрытых работ</h2><button class="close-btn" onclick="hideM('jak-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="ak-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Статус</label><select id="ak-s"><option value="draft">Составлен</option><option value="signed">Подписан</option><option value="rejected">Отклонён</option></select></div>
+        <div class="field field-full"><label>Вид скрытых работ *</label><input id="ak-w" placeholder="Арматурный каркас ростверка, армирование плиты..."></div>
+        <div class="field field-full"><label>Объект / конструкция</label><input id="ak-l" placeholder="Фундамент, ось А-Б, ряд 1-3"></div>
+        <div class="field field-full"><label>СНиП/ГОСТ</label><input id="ak-sn" placeholder="СНиП 3.03.01-87, ГОСТ..."></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveAkt()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveAkt(){const w=document.getElementById('ak-w').value.trim();if(!w){alert('Укажите вид работ');return;}jAkt.push({date:document.getElementById('ak-d').value,work:w,loc:document.getElementById('ak-l').value,snip:document.getElementById('ak-sn').value,status:document.getElementById('ak-s').value});S.set('s_jak',jAkt);hideM('jak-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delAkt(i){jAkt.splice(i,1);S.set('s_jak',jAkt);document.getElementById('j-content').innerHTML=renderJ();}
+async function importAkt(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Акты скрытых работ. JSON: [{date,work,loc,snip,status}]. status="draft"|"signed". Макс 50.');items.forEach(it=>jAkt.push({...it}));S.set('s_jak',jAkt);alert(`✅ ${items.length} актов`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+
+async function genAktSR(i){
+  const a=jAkt[i];if(!a)return;const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  const el=document.getElementById('akt-res');el.innerHTML='<div class="thinking">Составляю акт...</div>';
+  try{
+    // Приказ Минстроя №344/пр от 16.05.2023
+    const r=await aiCall(`Составь акт освидетельствования скрытых работ по форме Приказа Минстроя России №344/пр от 16.05.2023 для "${cfg.company}" (ИНН ${cfg.inn||'—'}, ОГРН ${cfg.ogrn||'—'}, СРО ${cfg.sroName||'—'} №${cfg.sroNum||'—'}) от ${new Date().toLocaleDateString('ru')}. Вид скрытых работ: ${a.work}. Объект: ${a.loc||'—'}. Нормативные документы: ${a.snip||'СНиП 3.03.01-87'}. Включи все обязательные реквизиты: объект капстроительства, застройщик, подрядчик (с ИНН/ОГРН/СРО каждого), перечень работ, ссылки на проект/нормативы, вывод о допуске следующего этапа, подписи всех сторон. Без Markdown.`);
+    el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><div class="gap-sm"><button class="btn btn-outline" onclick="copyReport('#akt-res .report-area')">📋 Копировать</button><button class="btn btn-success" onclick="window.print()">🖨️</button></div>`;
+  }catch(e){el.innerHTML='';}
+}
+
+// Входной контроль
+function renderJInput(){
+  const items=jInput.slice(-15).reverse().map((m,i)=>{const sc=m.result==='pass'?'badge-green':m.result==='reject'?'badge-red':'badge-yellow';const sl={pass:'Принято',reject:'Отклонено',pending:'На проверке'}[m.result]||m.result;return`<div class="mc-item"><div class="mc-title">${H(m.mat)} <span class="badge ${sc}">${sl}</span></div><div class="mc-row"><span class="mc-lbl">Дата</span><span>${m.date||'—'}</span></div><div class="mc-row"><span class="mc-lbl">Поставщик</span><span>${H(m.supplier||'—')}</span></div><div class="mc-row"><span class="mc-lbl">ГОСТ/ТУ</span><span class="text-muted text-sm">${H(m.gost||'—')}</span></div><div class="mc-row"><span class="mc-lbl">Партия / Сертификат</span><span class="text-muted text-sm">${H(m.cert||'—')}</span></div><div class="mc-actions"><button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delJIn(${jInput.length-1-i})">✕</button></div></div>`;}).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет записей</div>';
+  return`<div class="gap-sm" style="margin-bottom:.75rem"><label class="import-label">📂 Импорт<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importJIn(this)"></label><button class="btn btn-accent" onclick="document.getElementById('jin-m').classList.remove('hidden')">+ Запись</button></div>
+    <div class="mobile-cards">${items}</div>
+    <div class="modal-bg hidden" id="jin-m"><div class="modal"><div class="modal-hd"><h2>Входной контроль</h2><button class="close-btn" onclick="hideM('jin-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата</label><input id="jin-d" type="date" value="${now()}"></div>
+        <div class="field"><label>Результат</label><select id="jin-r"><option value="pass">Принято</option><option value="pending">На проверке</option><option value="reject">Отклонено</option></select></div>
+        <div class="field field-full"><label>Материал *</label><input id="jin-m-n" placeholder="Кирпич рядовой М150"></div>
+        <div class="field"><label>Поставщик</label><input id="jin-s" placeholder="ООО СтройКомплект"></div>
+        <div class="field"><label>ГОСТ/ТУ</label><input id="jin-g" placeholder="ГОСТ 530-2012"></div>
+        <div class="field"><label>Партия / Сертификат №</label><input id="jin-c" placeholder="партия 2024-05-01, серт. №123"></div>
+        <div class="field field-full"><label>Примечание</label><input id="jin-n" placeholder="Визуальный осмотр, испытания..."></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJIn()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveJIn(){const m=document.getElementById('jin-m-n').value.trim();if(!m){alert('Укажите материал');return;}jInput.push({date:document.getElementById('jin-d').value,mat:m,supplier:document.getElementById('jin-s').value,gost:document.getElementById('jin-g').value,cert:document.getElementById('jin-c').value,result:document.getElementById('jin-r').value,note:document.getElementById('jin-n').value});S.set('s_jin',jInput);hideM('jin-m');document.getElementById('j-content').innerHTML=renderJ();}
+function delJIn(i){jInput.splice(i,1);S.set('s_jin',jInput);document.getElementById('j-content').innerHTML=renderJ();}
+async function importJIn(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Входной контроль материалов. JSON: [{date,mat,supplier,gost,cert,result,note}]. date=YYYY-MM-DD, result="pass"|"reject"|"pending". Макс 100.');items.forEach(it=>jInput.push({...it}));S.set('s_jin',jInput);alert(`✅ ${items.length} записей`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
+
+// ══════ PANEL: АНАЛИТИКА ══════
+function panelAnalytics(){
+  const objs=objects.map(o=>`<div class="mc-item"><div class="mc-title">${H(o.name)}</div><div style="margin:.35rem 0"><div class="progress-bar"><div class="progress-bar-fill" style="width:${o.progress||0}%"></div></div></div><div class="mc-row"><span class="mc-lbl">Прогресс</span><span class="text-accent font-bold">${o.progress||0}%</span></div><div class="mc-row"><span class="mc-lbl">Нарядов</span><span>${naryady.filter(n=>n.objectId===o.id).length}</span></div><div class="mc-row"><span class="mc-lbl">Бюджет</span><span>${fmt(o.budget||0)} ₽</span></div></div>`).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:1.5rem">Добавьте объекты</div>';
+  return`
+    <div class="sec-hd"><h2>📊 Аналитика</h2>
+      <div class="actions">
+        <label class="import-label">📂<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importAnal(this)"></label>
+        <button class="btn btn-outline" onclick="document.getElementById('an-m').classList.remove('hidden')">+ Данные</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val">${objects.filter(o=>o.status==='active').length}</div><div class="kpi-lbl">Объектов в работе</div></div>
+      <div class="kpi"><div class="kpi-val">${brig.filter(b=>b.status==='active').length}</div><div class="kpi-lbl">Бригад на объектах</div></div>
+      <div class="kpi"><div class="kpi-val">${jDef.filter(d=>d.status==='open').length}</div><div class="kpi-lbl">Дефектов открытых</div></div>
+      <div class="kpi"><div class="kpi-val">${ks6a.filter(r=>r.date===now()).length}</div><div class="kpi-lbl">Записей КС-6а сегодня</div></div>
+    </div>
+    <div class="chart-wrap"><div class="chart-title">Выполнение работ (₽/нед)</div><canvas id="ch-rev" height="80"></canvas></div>
+    <div class="sec-hd mt-md"><h2>Прогресс по объектам</h2><button class="btn btn-outline" onclick="masterAnal()">🤖 МАСТЕР анализ</button></div>
+    <div class="mobile-cards">${objs}</div>
+    <div id="an-res" class="mt-sm"></div>
+    <div class="modal-bg hidden" id="an-m"><div class="modal"><div class="modal-hd"><h2>Добавить данные</h2><button class="close-btn" onclick="hideM('an-m')">✕</button></div>
+      <div class="form-grid">
+        <div class="field"><label>Дата (с)</label><input type="date" id="an-d" value="${now()}"></div>
+        <div class="field"><label>Выполнено ₽</label><input type="number" id="an-r" placeholder="800000"></div>
+        <div class="field"><label>Рабочих</label><input type="number" id="an-w" placeholder="25"></div>
+        <div class="field"><label>Объектов</label><input type="number" id="an-o" placeholder="3"></div>
+      </div>
+      <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveAnal()">Сохранить</button></div>
+    </div></div>`;
+}
+function saveAnal(){analData.push({date:document.getElementById('an-d').value,revenue:+document.getElementById('an-r').value||0,workers:+document.getElementById('an-w').value||0,objs:+document.getElementById('an-o').value||0});S.set('s_an',analData);hideM('an-m');renderCharts();}
+async function importAnal(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Данные выполнения работ. JSON: [{date,revenue,workers,objs}]. date=YYYY-MM-DD. Макс 52.');items.forEach(it=>analData.push({...it}));S.set('s_an',analData);alert(`✅ ${items.length} недель`);renderCharts();}catch(e){alert('Ошибка: '+e.message);}});}
+function renderCharts(){
+  const data=analData.slice(-12),dummy=!data.length;
+  const labels=dummy?['Н1','Н2','Н3','Н4','Н5','Н6','Н7']:data.map(d=>d.date.slice(5));
+  const revs=dummy?[500000,650000,480000,820000,700000,950000,880000]:data.map(d=>d.revenue);
+  const acc=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#F5C518';
+  const opts={responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{size:10}}},y:{ticks:{color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}}};
+  const r=document.getElementById('ch-rev');if(!r)return;
+  if(chObj.rev)chObj.rev.destroy();
+  chObj.rev=new Chart(r,{type:'bar',data:{labels,datasets:[{data:revs,backgroundColor:acc+'88',borderColor:acc,borderWidth:1,borderRadius:4}]},options:opts});
+}
+async function masterAnal(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('an-res');el.innerHTML='<div class="thinking">Анализирую...</div>';const ctx=`Объектов: ${objects.length}. Бригад: ${brig.length}. Нарядов: ${naryady.length}. Дефектов открытых: ${jDef.filter(d=>d.status==='open').length}. КС-6а записей: ${ks6a.length}.`;try{const r=await aiCall(`Дай анализ строительной компании и 3 рекомендации с цифрами. ${ctx}`);el.innerHTML=`<div class="card"><div class="master-tip">${H(r)}</div></div>`;}catch(e){el.innerHTML='';}}
+
+// ══════ PANEL: СМЕТА ══════
+function panelSmeta(){
+  const v=costs;
+  return`
+    <div class="sec-hd"><h2>💰 Смета и ROI</h2>
+      <div class="actions">
+        <label class="import-label">📂 Затраты<input type="file" accept=".xlsx,.xls,.csv,.txt" onchange="importCosts(this)"></label>
+        <button class="btn btn-ghost" onclick="fillBench()">⚡ Типовые %</button>
+      </div>
+    </div>
+    <div class="smeta-grid">
+      <div class="card">
+        <h3 style="margin-bottom:.85rem;font-size:.84rem">Расходы в месяц</h3>
+        <div class="field" style="margin-bottom:.5rem"><label>🏠 Аренда, ₽</label><input id="c-rent" type="number" placeholder="0" value="${v.rent||''}" oninput="saveCosts();renderSmeta()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>👔 Зарплата ИТР, ₽</label><input id="c-sal" type="number" placeholder="0" value="${v.sal||''}" oninput="saveCosts();renderSmeta()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>🚜 Аренда техники, ₽</label><input id="c-eq" type="number" placeholder="0" value="${v.eq||''}" oninput="saveCosts();renderSmeta()"></div>
+        <div class="field" style="margin-bottom:.5rem"><label>📦 Прочие, ₽</label><input id="c-oth" type="number" placeholder="0" value="${v.other||''}" oninput="saveCosts();renderSmeta()"></div>
+        <div class="divider"></div>
+        <h3 style="margin-bottom:.85rem;font-size:.84rem">Параметры проекта</h3>
+        <div class="slider-field"><label>Рабочих <span id="sv-w">10 чел</span></label><input type="range" min="1" max="200" step="1" value="10" oninput="sSliders.wk=+this.value;document.getElementById('sv-w').textContent=this.value+' чел';renderSmeta()"></div>
+        <div class="slider-field"><label>Срок <span id="sv-d">30 дней</span></label><input type="range" min="7" max="365" step="7" value="30" oninput="sSliders.days=+this.value;document.getElementById('sv-d').textContent=this.value+' дней';renderSmeta()"></div>
+        <div class="slider-field"><label>Материалы <span id="sv-m">500к₽</span></label><input type="range" min="50000" max="10000000" step="50000" value="500000" oninput="sSliders.mat=+this.value;document.getElementById('sv-m').textContent=(+this.value/1000).toFixed(0)+'к₽';renderSmeta()"></div>
+        <div class="slider-field"><label>Накладные <span id="sv-oh">15%</span></label><input type="range" min="5" max="40" step="1" value="15" oninput="sSliders.ovhd=+this.value;document.getElementById('sv-oh').textContent=this.value+'%';renderSmeta()"></div>
+      </div>
+      <div class="smeta-result" id="smeta-res">Считаем...</div>
+    </div>
+    <script>setTimeout(renderSmeta,80)<\/script>`;
+}
+function saveCosts(){costs.rent=+(document.getElementById('c-rent')?.value||0);costs.sal=+(document.getElementById('c-sal')?.value||0);costs.eq=+(document.getElementById('c-eq')?.value||0);costs.other=+(document.getElementById('c-oth')?.value||0);S.set('s_costs',costs);}
+function fillBench(){const rev=(cfg.revenue||2.5)*1e6;['c-rent','c-sal','c-eq','c-oth'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=Math.round(rev*[0.05,0.12,0.08,0.04][i]);});saveCosts();renderSmeta();}
+async function importCosts(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,system:'Отвечай только JSON объектом.',messages:[{role:'user',content:'Извлеки расходы. JSON: {rent,sal,eq,other}. Аренда→rent, зарплаты/ИТР→sal, техника→eq, прочее→other. Числа в рублях.\n\nДанные:\n'+text.slice(0,2000)}]})});const d=await r.json();const raw=d.content?.[0]?.text||'';const m=raw.match(/\{[\s\S]*\}/);if(!m){alert('Не распознано');return;}const c=JSON.parse(m[0]);['rent','sal','eq','other'].forEach(k=>{if(c[k]){costs[k]=+c[k];const id={rent:'c-rent',sal:'c-sal',eq:'c-eq',other:'c-oth'}[k];const el=document.getElementById(id);if(el)el.value=+c[k];}});S.set('s_costs',costs);renderSmeta();alert(`✅ Расходы из ${f.name}`);}catch(e){alert('Ошибка: '+e.message);}});}
+function renderSmeta(){
+  const el=document.getElementById('smeta-res');if(!el)return;
+  const{wk,days,mat,ovhd}=sSliders;
+  const hr=cfg.hourRate||1200,labor=wk*hr*8*days;
+  const ovAmt=Math.round((labor+mat)*ovhd/100),total=labor+mat+ovAmt;
+  const mk=cfg.markup||30,price=Math.round(total*(1+mk/100));
+  const profit=price-total,margin=(profit/price*100).toFixed(1);
+  const fixed=(costs.rent+costs.sal+costs.eq+costs.other)*(days/30);
+  const net=profit-fixed,pc=net>=0?'#4ade80':'#f87171';
+  const roi=total>0?(net/total*100).toFixed(1):'—';
+  el.innerHTML=`<h3 style="margin-bottom:.85rem;font-size:.84rem;font-family:var(--font-hd)">Расчёт стоимости проекта</h3>
+    <div class="smeta-total">${fmt(price)} ₽</div>
+    <div class="text-muted text-sm" style="margin-bottom:.9rem">${(price/1e6).toFixed(2)} млн · наценка ${mk}%</div>
+    <div class="smeta-row"><span>Трудозатраты (${wk}чел × ${days}дн)</span><span class="rv">${fmt(labor)} ₽</span></div>
+    <div class="smeta-row"><span>Материалы</span><span class="rv">${fmt(mat)} ₽</span></div>
+    <div class="smeta-row"><span>Накладные ${ovhd}%</span><span class="rv">${fmt(ovAmt)} ₽</span></div>
+    <div class="smeta-row"><span>Себестоимость</span><span style="color:#f87171;font-weight:700">${fmt(total)} ₽</span></div>
+    <div class="divider" style="margin:.5rem 0"></div>
+    <div class="smeta-row"><span>Валовая прибыль</span><span class="rv">${fmt(profit)} ₽</span></div>
+    <div class="smeta-row"><span>Маржа</span><span class="rv">${margin}%</span></div>
+    ${fixed>0?`<div class="smeta-row"><span>Постоянные расходы</span><span style="color:#f87171">${fmt(Math.round(fixed))} ₽</span></div>
+    <div class="smeta-row"><span class="font-bold">Чистая прибыль</span><span style="color:${pc};font-weight:800">${fmt(Math.round(net))} ₽</span></div>
+    <div class="smeta-row"><span class="text-muted text-sm">ROI</span><span style="color:${pc}">${roi}%</span></div>`:''}`;
+}
+
+// ══════ PANEL: ОТЧЁТ ══════
+function panelReport(){
+  return`
+    <div class="sec-hd"><h2>📤 Отчёт</h2></div>
+    <div class="gap-sm" style="margin-bottom:1rem;flex-direction:column">
+      <div class="gap-sm">
+        <button class="btn btn-ghost" onclick="genReport('brief')">📋 Сводка прораба</button>
+        <button class="btn btn-ghost" onclick="genReport('weekly')">📄 Еженедельный</button>
+      </div>
+      <div class="gap-sm">
+        <button class="btn btn-accent" onclick="genReport('owner')">💼 Для собственника</button>
+        <button class="btn btn-ghost" onclick="genReport('client')">📨 Для заказчика</button>
+        <button class="btn btn-ghost" onclick="genReport('safety')">🦺 Отчёт по ТБ</button>
+      </div>
+    </div>
+    <div class="report-area" id="rep-area">Нажмите кнопку выше — МАСТЕР сформирует отчёт.</div>
+    <div class="gap-sm mt-sm">
+      <button class="btn btn-outline" onclick="copyReport('#rep-area')">📋 Копировать</button>
+      <button class="btn btn-success" onclick="window.print()">🖨️ Печать PDF</button>
+    </div>`;
+}
+async function genReport(type){
+  const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}
+  const el=document.getElementById('rep-area');if(!el)return;el.textContent='МАСТЕР составляет отчёт...';
+  const reqs=cfg.inn?`ИНН ${cfg.inn}, СРО ${cfg.sroName||'—'} №${cfg.sroNum||'—'}`:'реквизиты не заполнены';
+  const ctx=`Компания: ${cfg.company} (${reqs}). Объектов: ${objects.length} (${objects.filter(o=>o.status==='active').length} активных). Бригад: ${brig.length}. Нарядов: ${naryady.length}. КС-6а записей: ${ks6a.length}. Дефектов открытых: ${jDef.filter(d=>d.status==='open').length}. ТБ инструктажей: ${jTB.length}. Актов СР: ${jAkt.length}.`;
+  const prompts={
+    brief:`Сводка прораба для утренней планёрки (1 страница): ключевые показатели, активные работы сегодня, открытые проблемы, задачи на день. ${ctx}`,
+    weekly:`Еженедельный отчёт: выполнение по объектам (данные КС-6а), бригады, дефекты, план на следующую неделю. ${ctx}`,
+    owner:`Отчёт для собственника: статус объектов, финансовые показатели, прогресс, риски срыва сроков. ${ctx}`,
+    client:`Официальное письмо заказчику о ходе строительства. Деловой стиль. Реквизиты компании включи. ${ctx}`,
+    safety:`Отчёт по безопасности труда: инструктажи (${jTB.length}), дефекты конструкций (${jDef.filter(d=>d.status==='open').length} открытых), мероприятия. ${ctx}`
+  };
+  try{const r=await aiCall(prompts[type]||prompts.brief,1000);el.textContent=r;}catch(e){el.textContent=`Ошибка: ${e.message}`;}
+}
+
+// ══════════════════════════════════════════════════════
+// ✅ УЛУЧШЕНИЕ 1: РАСШИРЕННЫЕ НАСТРОЙКИ
+// Все реквизиты для юридически валидных документов
+// ══════════════════════════════════════════════════════
+function openSettings(){
+  const M=t=>mem[t]?.map((it,i)=>`<div class="mem-item"><span>${H(it.slice(0,60))}</span><button class="mem-del" onclick="delMem('${t}',${i})">✕</button></div>`).join('')||'<p class="text-sm text-muted">Пусто</p>';
+  document.getElementById('settings-content').innerHTML=`
+    <div style="background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.2);border-radius:8px;padding:.6rem .8rem;margin-bottom:.85rem;font-size:.77rem;">
+      ⚠️ Заполните реквизиты полностью — они вставляются в КС-2, акты скрытых работ и другие документы автоматически.
+    </div>
+
+    <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.55rem;">Основное</div>
+    <div class="form-grid" style="margin-bottom:.9rem">
+      <div class="field field-full"><label>Название компании *</label><input id="s-c" value="${H(cfg.company)}"></div>
+      <div class="field"><label>Город</label><input id="s-ci" value="${H(cfg.city)}"></div>
+      <div class="field"><label>Прораб / менеджер</label><input id="s-m" value="${H(cfg.manager)}"></div>
+      <div class="field field-full"><label>Специализация</label><input id="s-sp" value="${H(cfg.spec||'')}"></div>
+      <div class="field"><label>Рабочих всего</label><input id="s-w" type="number" value="${cfg.workers}"></div>
+      <div class="field"><label>Ставка ₽/час</label><input id="s-hr" type="number" value="${cfg.hourRate}"></div>
+      <div class="field"><label>Выручка млн/мес</label><input id="s-r" type="number" step="0.1" value="${cfg.revenue}"></div>
+      <div class="field"><label>Наценка %</label><input id="s-mk" type="number" value="${cfg.markup}"></div>
+      <div class="field"><label>НДС % (0 или 20)</label><input id="s-nds" type="number" value="${cfg.nds||0}"></div>
+      <div class="field"><label>Цвет акцента</label><input id="s-col" type="color" value="${cfg.acc||'#F5C518'}"></div>
+    </div>
+
+    <!-- ✅ РЕКВИЗИТЫ ДЛЯ ДОКУМЕНТОВ -->
+    <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.55rem;">Реквизиты компании (для КС-2 и актов)</div>
+    <div class="form-grid" style="margin-bottom:.9rem">
+      <div class="field"><label>ИНН *</label><input id="s-inn" placeholder="7700000000" value="${H(cfg.inn||'')}"></div>
+      <div class="field"><label>ОГРН</label><input id="s-ogrn" placeholder="1027700000000" value="${H(cfg.ogrn||'')}"></div>
+      <div class="field field-full"><label>Юридический адрес</label><input id="s-adr" placeholder="г. Москва, ул. Строителей 1, оф. 101" value="${H(cfg.address||'')}"></div>
+      <div class="field field-full"><label>Наименование СРО</label><input id="s-sron" placeholder="СРО НП «Объединение строителей»" value="${H(cfg.sroName||'')}"></div>
+      <div class="field"><label>Номер свидетельства СРО</label><input id="s-sronu" placeholder="С-005-7700000000-01" value="${H(cfg.sroNum||'')}"></div>
+      <div class="field"><label>Дата выдачи СРО</label><input id="s-srod" type="date" value="${cfg.sroDate||''}"></div>
+      <div class="field"><label>Номер договора подряда</label><input id="s-cnum" placeholder="123/2024" value="${H(cfg.contractNum||'')}"></div>
+      <div class="field"><label>Дата договора</label><input id="s-cdate" type="date" value="${cfg.contractDate||''}"></div>
+    </div>
+
+    <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.55rem;">API</div>
+    <div class="field" style="margin-bottom:.85rem"><label>API ключ Anthropic</label><input id="s-k" type="password" placeholder="sk-ant-..." value="${S.raw('st8_api_key')||''}"></div>
+
+    <div class="gap-sm"><button class="btn btn-accent" onclick="saveSettings()">💾 Сохранить</button></div>
+    <div class="divider"></div>
+    <div class="font-bold text-sm" style="margin-bottom:.75rem">🧠 Память МАСТЕРА</div>
+    <div class="mem-section"><h4>✅ Сработало (${mem.wins.length})</h4><div class="mem-list">${M('wins')}</div></div>
+    <div class="mem-section"><h4>❌ Не работает (${mem.fails.length})</h4><div class="mem-list">${M('fails')}</div></div>
+    <div class="mem-section"><h4>📝 Заметки (${mem.notes.length})</h4><div class="mem-list">${M('notes')}</div></div>
+    <div class="gap-sm mt-md">
+      <button class="btn btn-ghost" onclick="updateApp()">🔄 Обновить</button>
+      <button class="btn btn-danger" onclick="clearMem()">🗑️ Очистить память</button>
+      <button class="btn btn-danger" onclick="resetAll()">⚠️ Сбросить всё</button>
+    </div>`;
+  document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings(){document.getElementById('settings-modal').classList.add('hidden');}
+
+function saveSettings(){
+  cfg.company=document.getElementById('s-c').value;
+  cfg.city=document.getElementById('s-ci').value;
+  cfg.manager=document.getElementById('s-m').value;
+  cfg.spec=document.getElementById('s-sp').value;
+  cfg.workers=+document.getElementById('s-w').value||0;
+  cfg.hourRate=+document.getElementById('s-hr').value||0;
+  cfg.revenue=+document.getElementById('s-r').value||0;
+  cfg.markup=+document.getElementById('s-mk').value||30;
+  cfg.nds=+document.getElementById('s-nds').value||0;
+  cfg.acc=document.getElementById('s-col').value;
+  // ✅ Сохраняем реквизиты
+  cfg.inn=document.getElementById('s-inn').value.trim();
+  cfg.ogrn=document.getElementById('s-ogrn').value.trim();
+  cfg.address=document.getElementById('s-adr').value;
+  cfg.sroName=document.getElementById('s-sron').value;
+  cfg.sroNum=document.getElementById('s-sronu').value.trim();
+  cfg.sroDate=document.getElementById('s-srod').value;
+  cfg.contractNum=document.getElementById('s-cnum').value.trim();
+  cfg.contractDate=document.getElementById('s-cdate').value;
+  const k=document.getElementById('s-k').value.trim();if(k)S.setRaw('st8_api_key',k);
+  S.set('s_cfg',cfg);applyAcc();
+  document.getElementById('hd-obj').textContent=cfg.company;
+  closeSettings();alert('✅ Настройки сохранены');
+}
+
+function delMem(type,i){mem[type].splice(i,1);S.set('s_mem',mem);openSettings();}
+function clearMem(){if(!confirm('Очистить память?'))return;mem.wins=[];mem.fails=[];mem.notes=[];S.set('s_mem',mem);openSettings();}
+function updateApp(){if('caches' in window){caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).then(()=>{if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));location.reload(true);});}else{location.reload(true);}}
+function resetAll(){if(!confirm('Сбросить ВСЕ данные?'))return;localStorage.clear();location.reload();}
+
+// ══════ BOOT ══════
+init();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
