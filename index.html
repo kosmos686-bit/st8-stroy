@@ -816,6 +816,7 @@ function panelObjects(){
         <button class="btn btn-ghost" style="font-size:.68rem;padding:.2rem .5rem" onclick="updProgress(${i})">% прогресс</button>
         <button class="btn btn-danger" style="font-size:.68rem;padding:.2rem .5rem" onclick="delObj(${i})">✕</button>
       </div>
+      <div id="obj-res-${i}"></div>
     </div>`;
   }).join('')||'<div class="text-muted text-sm" style="text-align:center;padding:2rem">Нет объектов</div>';
 
@@ -1611,14 +1612,39 @@ async function updateApp(btn){if(btn){btn.textContent='⏳ Обновляю...';
 async function sendToAgent(i){
   const obj=objects[i];if(!obj)return;
   const url=(cfg.agentUrl||'http://localhost:8000').replace(/\/$/,'');
-  const emails=obj.clientEmail?[obj.clientEmail]:[];
-  const body={company:obj.client||obj.name,contact:obj.name,industry:'Строительство',scale:obj.budget?`Бюджет ${fmt(obj.budget)} ₽`:'—',pain:`Объект: ${obj.name}. Адрес: ${obj.address||'—'}. Дедлайн: ${obj.deadline||'—'}.`,market:'ru',contact_emails:emails};
+  const resEl=document.getElementById('obj-res-'+i);
+  const body={company:obj.client||obj.name,contact:obj.name,industry:'Строительство',scale:obj.budget?`Бюджет ${fmt(obj.budget)} ₽`:'—',pain:`Объект: ${obj.name}. Адрес: ${obj.address||'—'}. Дедлайн: ${obj.deadline||'—'}.`,market:'ru',contact_emails:[]};
+  if(resEl)resEl.innerHTML='<div class="thinking" style="margin-top:.5rem">⏳ Агенты работают — обычно 1–2 мин...</div>';
+  let leadId;
   try{
     const r=await fetch(url+'/lead/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    alert('✅ Лид отправлен агенту\nlead_id: '+(d.lead_id||'—'));
-  }catch(e){alert('Ошибка агента: '+e.message+'\n\nПроверьте autopilot на '+url);}
+    leadId=(await r.json()).lead_id;
+  }catch(e){
+    if(resEl)resEl.innerHTML=`<p style="color:#fca5a5;font-size:.76rem;margin-top:.5rem">Ошибка: ${e.message}<br>Проверьте autopilot на ${url}</p>`;
+    return;
+  }
+  let attempts=0;
+  const poll=setInterval(async()=>{
+    if(++attempts>24){clearInterval(poll);if(resEl)resEl.innerHTML='<p style="color:#fca5a5;font-size:.76rem;margin-top:.5rem">Таймаут — агент не ответил за 2 мин</p>';return;}
+    try{
+      const d=await(await fetch(url+'/lead/'+leadId+'?t='+Date.now())).json();
+      if(d.status==='ready'||d.status==='filtered'){
+        clearInterval(poll);
+        if(!resEl)return;
+        if(d.status==='filtered'){resEl.innerHTML='<div style="color:#fca5a5;font-size:.76rem;margin-top:.5rem">🔴 Лид не прошёл ICP фильтр</div>';return;}
+        const kp=d.kp||'КП не сгенерировано';
+        const score=d.score?.score||'—';
+        const kpEsc=kp.replace(/\\/g,'\\\\').replace(/`/g,'\\`');
+        resEl.innerHTML=`<div style="margin-top:.6rem;background:rgba(245,197,24,.06);border:1px solid rgba(245,197,24,.2);border-radius:8px;padding:.7rem .85rem">
+          <div style="font-size:.69rem;color:var(--accent);font-weight:700;margin-bottom:.4rem">🤖 КП от агента · Score: ${score}/100</div>
+          <div style="font-size:.76rem;line-height:1.6;color:var(--text);white-space:pre-wrap;max-height:200px;overflow-y:auto">${H(kp)}</div>
+          <div class="gap-sm" style="margin-top:.5rem">
+            <button class="btn btn-outline" style="font-size:.66rem;padding:.2rem .5rem" onclick="navigator.clipboard.writeText(\`${kpEsc}\`).then(()=>alert('Скопировано!'))">📋 Копировать КП</button>
+          </div></div>`;
+      }
+    }catch(e){}
+  },5000);
 }
 function resetAll(){if(!confirm('Сбросить ВСЕ данные?'))return;localStorage.clear();location.reload();}
 
