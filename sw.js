@@ -1,4 +1,4 @@
-const CACHE = 'st8-stroy-v3';
+const CACHE = 'st8-stroy-v4';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.add('./index.html')));
   self.skipWaiting();

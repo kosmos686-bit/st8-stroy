@@ -355,6 +355,8 @@ let cfg = S.get('s_cfg') || {
   sroName:'',sroNum:'',sroDate:'',
   contractNum:'',contractDate:'',
   agentUrl:'http://localhost:8000',
+  tgToken:'',
+  tgChatId:'',
 };
 
 let mem=S.get('s_mem')||{wins:[],fails:[],notes:[],days:0,lastV:null};
@@ -856,11 +858,13 @@ function panelObjects(){
 
 function saveObj(){
   const n=document.getElementById('om-n').value.trim();if(!n){alert('Укажите название');return;}
-  objects.push({id:'obj'+Date.now(),name:n,address:document.getElementById('om-a').value,client:document.getElementById('om-c').value,clientInn:document.getElementById('om-cinn').value,deadline:document.getElementById('om-d').value,budget:+document.getElementById('om-b').value||0,progress:+document.getElementById('om-p').value||0,status:document.getElementById('om-s').value});
+  const _os=document.getElementById('om-s').value;
+  objects.push({id:'obj'+Date.now(),name:n,address:document.getElementById('om-a').value,client:document.getElementById('om-c').value,clientInn:document.getElementById('om-cinn').value,deadline:document.getElementById('om-d').value,budget:+document.getElementById('om-b').value||0,progress:+document.getElementById('om-p').value||0,status:_os});
+  sendTgNotif(`📋 Новый объект: ${n}\nКлиент: ${document.getElementById('om-c').value||'—'}\nСтатус: ${_os}`);
   S.set('s_obj',objects);hideM('om');document.getElementById('panel-objects').innerHTML=panelObjects();
 }
 function delObj(i){if(!confirm('Удалить?'))return;objects.splice(i,1);S.set('s_obj',objects);document.getElementById('panel-objects').innerHTML=panelObjects();}
-function updProgress(i){const p=prompt('Прогресс %:',objects[i].progress||0);if(p===null)return;objects[i].progress=Math.max(0,Math.min(100,+p||0));S.set('s_obj',objects);document.getElementById('panel-objects').innerHTML=panelObjects();}
+function updProgress(i){const p=prompt('Прогресс %:',objects[i].progress||0);if(p===null)return;const pv=Math.max(0,Math.min(100,+p||0));objects[i].progress=pv;sendTgNotif(`📊 Прогресс обновлён: ${objects[i].name}\n${pv}%`);S.set('s_obj',objects);document.getElementById('panel-objects').innerHTML=panelObjects();}
 
 // ══════════════════════════════════════════════════════
 // ✅ УЛУЧШЕНИЕ 3: КС-2 ПО ОБЪЕКТУ
@@ -1264,7 +1268,7 @@ function renderJWork(){
       <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJW()">Сохранить</button></div>
     </div></div>`;
 }
-function saveJW(){const w=document.getElementById('jw-w').value.trim();if(!w){alert('Укажите вид работ');return;}jWork.push({date:document.getElementById('jw-d').value,work:w,loc:document.getElementById('jw-l').value,result:document.getElementById('jw-r').value,note:document.getElementById('jw-n').value});S.set('s_jw',jWork);hideM('jw-m');document.getElementById('j-content').innerHTML=renderJ();}
+function saveJW(){const w=document.getElementById('jw-w').value.trim();if(!w){alert('Укажите вид работ');return;}const _jwr=document.getElementById('jw-r').value;jWork.push({date:document.getElementById('jw-d').value,work:w,loc:document.getElementById('jw-l').value,result:_jwr,note:document.getElementById('jw-n').value});sendTgNotif(`📝 Журнал работ: ${w}\nРезультат: ${_jwr==='pass'?'✅ Принято':'❌ Замечания'}`);S.set('s_jw',jWork);hideM('jw-m');document.getElementById('j-content').innerHTML=renderJ();}
 function delJW(i){jWork.splice(i,1);S.set('s_jw',jWork);document.getElementById('j-content').innerHTML=renderJ();}
 async function importJW(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки записи журнала работ. JSON: [{date,work,loc,result,note}]. date=YYYY-MM-DD, result="pass"|"fail". Макс 100.');items.forEach(it=>jWork.push({...it}));S.set('s_jw',jWork);alert(`✅ ${items.length} записей`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
 async function genChecklist(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('jw-res');el.innerHTML='<div class="thinking">Готовлю чек-лист...</div>';const works=naryady.filter(n=>n.status==='active').slice(0,5).map(n=>n.title).join(', ')||'общестроительные работы';try{const r=await aiCall(`Составь чек-лист контроля качества для "${cfg.company}" на ${new Date().toLocaleDateString('ru')}. Работы: ${works}. СНиП/ГОСТ. Построчно, без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><button class="btn btn-outline" onclick="copyReport('#jw-res .report-area')">📋 Копировать</button>`;}catch(e){el.innerHTML='';}}
@@ -1306,9 +1310,9 @@ function renderJDef(){
       <div class="ob-nav"><div></div><button class="btn btn-accent" onclick="saveJD()">Сохранить</button></div>
     </div></div>`;
 }
-function saveJD(){const t=document.getElementById('jd-t').value.trim();if(!t){alert('Опишите дефект');return;}jDef.push({date:document.getElementById('jd-d').value,title:t,loc:document.getElementById('jd-l').value,status:document.getElementById('jd-s').value,note:document.getElementById('jd-n').value});S.set('s_jd',jDef);hideM('jd-m');document.getElementById('j-content').innerHTML=renderJ();}
+function saveJD(){const t=document.getElementById('jd-t').value.trim();if(!t){alert('Опишите дефект');return;}const _jds=document.getElementById('jd-s').value;const _jdl=document.getElementById('jd-l').value;jDef.push({date:document.getElementById('jd-d').value,title:t,loc:_jdl,status:_jds,note:document.getElementById('jd-n').value});sendTgNotif(`⚠️ Новый дефект: ${t}\nМесто: ${_jdl||'—'}\nСтатус: ${_jds}`);S.set('s_jd',jDef);hideM('jd-m');document.getElementById('j-content').innerHTML=renderJ();}
 function delJD(i){jDef.splice(i,1);S.set('s_jd',jDef);document.getElementById('j-content').innerHTML=renderJ();}
-function cycleDefStatus(i){const s=['open','fixing','closed'];jDef[i].status=s[(s.indexOf(jDef[i].status)+1)%s.length];S.set('s_jd',jDef);document.getElementById('j-content').innerHTML=renderJ();}
+function cycleDefStatus(i){const s=['open','fixing','closed'];const sl={open:'Открыт',fixing:'Устраняется',closed:'Закрыт'};jDef[i].status=s[(s.indexOf(jDef[i].status)+1)%s.length];sendTgNotif(`🔄 Дефект "${jDef[i].title}"\nСтатус → ${sl[jDef[i].status]}`);S.set('s_jd',jDef);document.getElementById('j-content').innerHTML=renderJ();}
 async function importJD(input){const f=input.files[0];if(!f)return;input.value='';const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}readFile(f,async text=>{try{const items=await parseJSON(key,text,'Извлеки дефекты. JSON: [{date,title,loc,status,note}]. date=YYYY-MM-DD, status="open"|"fixing"|"closed". Макс 50.');items.forEach(it=>jDef.push({...it}));S.set('s_jd',jDef);alert(`✅ ${items.length} дефектов`);document.getElementById('j-content').innerHTML=renderJ();}catch(e){alert('Ошибка: '+e.message);}});}
 async function genDefAct(){const key=S.raw('st8_api_key');if(!key){alert('Нужен API ключ');return;}const el=document.getElementById('jd-res');el.innerHTML='<div class="thinking">Составляю акт...</div>';const items=jDef.filter(d=>d.status!=='closed').map(d=>`${d.title} (${d.loc||'место не указано'})`).join('; ')||'нет';try{const r=await aiCall(`Составь дефектный акт для "${cfg.company}" ИНН ${cfg.inn||'—'} от ${new Date().toLocaleDateString('ru')}. Нарушения: ${items}. Включи: шапку с реквизитами, перечень с ссылками на СНиП, предписание по устранению со сроками. Без Markdown.`);el.innerHTML=`<div class="report-area" style="min-height:auto;margin-bottom:.55rem">${H(r)}</div><div class="gap-sm"><button class="btn btn-outline" onclick="copyReport('#jd-res .report-area')">📋 Копировать</button><button class="btn btn-success" onclick="window.print()">🖨️</button></div>`;}catch(e){el.innerHTML='';}}
 
@@ -1563,6 +1567,11 @@ function openSettings(){
     <div class="field" style="margin-bottom:.55rem"><label>API ключ Anthropic</label><input id="s-k" type="password" placeholder="sk-ant-..." value="${S.raw('st8_api_key')||''}"></div>
     <div class="field" style="margin-bottom:.85rem"><label>Autopilot URL (агенты КП)</label><input id="s-agu" placeholder="http://localhost:8000" value="${H(cfg.agentUrl||'http://localhost:8000')}"></div>
 
+    <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin:.9rem 0 .55rem;">Уведомления в Telegram</div>
+    <div class="field" style="margin-bottom:.55rem"><label>Токен бота</label><input id="s-tgt" type="password" placeholder="1234567890:AAF..." value="${H(cfg.tgToken||'')}"></div>
+    <div class="field" style="margin-bottom:.55rem"><label>Chat ID (куда слать)</label><input id="s-tgc" placeholder="6152243830" value="${H(cfg.tgChatId||'')}"></div>
+    <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.85rem">Создай бота через @BotFather, добавь в чат и укажи chat_id. Уведомления придут при изменениях объектов, дефектов и журнала.</div>
+
     <div class="gap-sm"><button class="btn btn-accent" onclick="saveSettings()">💾 Сохранить</button></div>
     <div class="divider"></div>
     <div class="font-bold text-sm" style="margin-bottom:.75rem">🧠 Память МАСТЕРА</div>
@@ -1578,6 +1587,13 @@ function openSettings(){
 }
 
 function closeSettings(){document.getElementById('settings-modal').classList.add('hidden');}
+
+function sendTgNotif(text){
+  const token=cfg.tgToken;const chatId=cfg.tgChatId;
+  if(!token||!chatId)return;
+  const body=`🏗 ${cfg.company||'ST8 Строй'}\n${text}\n⏱ ${new Date().toLocaleString('ru-RU')}`;
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:body})}).catch(()=>{});
+}
 
 function saveSettings(){
   cfg.company=document.getElementById('s-c').value;
@@ -1601,6 +1617,8 @@ function saveSettings(){
   cfg.contractDate=document.getElementById('s-cdate').value;
   const k=document.getElementById('s-k').value.trim();if(k)S.setRaw('st8_api_key',k);
   cfg.agentUrl=document.getElementById('s-agu').value.trim();
+  cfg.tgToken=document.getElementById('s-tgt').value.trim();
+  cfg.tgChatId=document.getElementById('s-tgc').value.trim();
   S.set('s_cfg',cfg);applyAcc();
   document.getElementById('hd-obj').textContent=cfg.company;
   closeSettings();alert('✅ Настройки сохранены');
